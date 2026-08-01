@@ -188,7 +188,7 @@ export default function PrizeSlideshow({ onClose }: { onClose: () => void }) {
               </p>
               
               <p className="text-[#DCD6F7] text-lg font-medium italic mt-4 p-4 bg-[#A6B1E1]/10 rounded-lg border border-[#A6B1E1]/20">
-                (And hey... if the guy/girl you eventually settle for ever cheats on you(i know impossible) or they turn out to be gay, you know exactly who to come running back to.)
+                And hey... if the guy/girl you eventually settle for ever cheats on you(i know impossible) or they turn out to be gay, you know exactly who to come running back to.
               </p>
             </div>
           )}
