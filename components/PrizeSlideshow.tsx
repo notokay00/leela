@@ -158,11 +158,8 @@ export default function PrizeSlideshow({ onClose }: { onClose: () => void }) {
               <h2 className="text-3xl font-bold text-[#A6B1E1] mb-2">So...</h2>
               
               <div className="space-y-4 mb-4">
-                <p className="text-[#DCD6F7] text-lg">
-                  I meant every word. I know this is a mess, but I want to fix it.
-                </p>
                 <p className="text-[#F4EEFF] text-lg font-medium">
-                  Any chance you're ready to unblock me so we can actually talk?
+                  Any chance you are ready to unblock me?
                 </p>
               </div>
 
