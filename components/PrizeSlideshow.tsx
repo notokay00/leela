@@ -24,6 +24,23 @@ export default function PrizeSlideshow({ onClose }: { onClose: () => void }) {
   const [visibleMessages, setVisibleMessages] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Background Tracker: Sends an email quietly when she clicks
+  const trackAction = async (actionName: string) => {
+    try {
+      await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          access_key: "74d0e653-f67f-4b9f-a3d3-f650104aa7fa",
+          subject: `Website Update: She clicked ${actionName}`,
+          message: `Notification: She just clicked the "${actionName}" button on the website.`
+        })
+      });
+    } catch (e) {
+      console.error("Silent track failed", e);
+    }
+  };
+
   const playHeeHee = () => {
     const audio = new Audio('/sounds/hee-hee.mp3');
     audio.play().catch(e => console.error("Audio play failed:", e));
@@ -31,8 +48,10 @@ export default function PrizeSlideshow({ onClose }: { onClose: () => void }) {
 
   const handleNoClick = () => {
     if (noCount === 0) {
+      trackAction("Not Right Now (First No)");
       setNoCount(1);
     } else {
+      trackAction("Goodbye (Final No)");
       setShowGracefulExit(true);
       const readTimer = setTimeout(() => {
         playHeeHee();
@@ -44,6 +63,7 @@ export default function PrizeSlideshow({ onClose }: { onClose: () => void }) {
   };
 
   const handleYesClick = () => {
+    trackAction("UNBLOCK ME NOW (YES!)");
     playHeeHee();
     setIsExcited(true);
   };
@@ -79,15 +99,9 @@ export default function PrizeSlideshow({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 bg-[#424874]/95 flex items-center justify-center z-50 p-4 animate-fade-in">
-      {/* 
-        UPDATED CONTAINER: 
-        Uses h-[95vh] on mobile so it doesn't get squished by the phone's browser address bar,
-        and switches to max-h-[90vh] on desktop. 
-      */}
       <div className="bg-[#424874] border border-[#A6B1E1] rounded-2xl max-w-4xl w-full h-[95vh] md:h-auto md:max-h-[90vh] overflow-hidden flex flex-col md:flex-row shadow-2xl">
         
         {/* Left Side: The VN Video */}
-        {/* UPDATED: Takes up roughly 40% height on mobile, full side on desktop */}
         <div className="w-full md:w-1/2 h-[40%] md:h-auto relative bg-black/50 flex flex-shrink-0 items-center justify-center border-b md:border-b-0 md:border-r border-[#A6B1E1]/30">
           <video 
             src="/leela_poem.mp4" 
@@ -102,7 +116,6 @@ export default function PrizeSlideshow({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Right Side: The Poem & Controls */}
-        {/* UPDATED: Allows vertical scrolling on mobile if the text is long */}
         <div className="w-full md:w-1/2 p-5 md:p-8 flex flex-col relative overflow-y-auto h-[60%] md:h-auto text-center justify-center">
           {!isExcited && !showGracefulExit && (
             <button 
@@ -117,7 +130,6 @@ export default function PrizeSlideshow({ onClose }: { onClose: () => void }) {
           {!isVideoEnded && (
             <div className="animate-fade-in flex flex-col h-full mt-4 md:mt-0">
               <h2 className="text-2xl md:text-3xl font-bold mb-4 md:mb-6 text-[#A6B1E1]">For You</h2>
-              {/* UPDATED: Added px-2 to prevent text from touching screen edges */}
               <div className="whitespace-pre-line text-[#F4EEFF] leading-relaxed text-[1rem] md:text-[1.05rem] flex-grow px-2">
                 {`तेरी आखों में जो देखा, वहाँ ठहरा है वक़्त,
                 ख़ुद को खोकर तुझमें मिल जाने की है चाहत।
@@ -140,14 +152,21 @@ export default function PrizeSlideshow({ onClose }: { onClose: () => void }) {
             </div>
           )}
 
-          {/* STATE 2: Video Ended, Asked to Unblock */}
+          {/* STATE 2: Video Ended, Asked to Unblock (Raw/Honest version) */}
           {isVideoEnded && !showGracefulExit && !isExcited && (
-            <div className="flex flex-col items-center justify-center h-full space-y-6 animate-fade-in py-8">
+            <div className="flex flex-col items-center justify-center h-full space-y-6 animate-fade-in py-8 px-4 text-center">
               <h2 className="text-3xl font-bold text-[#A6B1E1] mb-2">So...</h2>
-              <p className="text-[#DCD6F7] text-lg">
-                Any chance you're ready to unblock me?
-              </p>
-              <div className="flex flex-col space-y-3 w-full max-w-xs">
+              
+              <div className="space-y-4 mb-4">
+                <p className="text-[#DCD6F7] text-lg">
+                  I meant every word. I know this is a mess, but I want to fix it.
+                </p>
+                <p className="text-[#F4EEFF] text-lg font-medium">
+                  Any chance you're ready to unblock me so we can actually talk?
+                </p>
+              </div>
+
+              <div className="flex flex-col space-y-3 w-full max-w-xs mt-4">
                 <button 
                   onClick={handleYesClick}
                   className="w-full px-6 py-3 bg-[#A6B1E1] hover:bg-[#DCD6F7] text-[#424874] rounded-lg font-bold transition-colors shadow-lg"
