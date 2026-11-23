@@ -4,12 +4,14 @@ import path from "node:path";
 import readline from "node:readline";
 
 // OWASP Password Storage Cheat Sheet baseline: N=65536 (2^16), r=8, p=2 (~64 MiB)
+// Explicit bounded maxmem = 128 MiB (~2x safety margin over 64 MiB working set).
+// Must stay identical to lib/auth/crypto.ts (verified by tests/auth-core.test.ts).
 const SCRYPT_N = 65536;
 const SCRYPT_R = 8;
 const SCRYPT_P = 2;
 const SCRYPT_SALT_BYTES = 16;
 const SCRYPT_KEY_BYTES = 64;
-const SCRYPT_MAXMEM = 256 * 1024 * 1024;
+const SCRYPT_MAXMEM = 128 * 1024 * 1024;
 
 function scryptAsync(passphrase, salt) {
   return new Promise((resolve, reject) => {

@@ -23,28 +23,32 @@ export const MAX_TOKEN_LENGTH = 512;
 export const MAX_PASSPHRASE_LENGTH = 256;
 
 /**
- * OWASP Password Storage Cheat Sheet compliant scrypt baseline:
- *   N = 65536 (2^16), r = 8, p = 2 (~64 MiB memory, ~185 ms on Node 24)
+ * OWASP Password Storage Cheat Sheet compliant scrypt configuration:
+ *   N = 65536 (2^16), r = 8, p = 2, salt = 16 bytes, derivedKey = 64 bytes
  *
- * Chosen over Node's built-in argon2id (added in Node 24.7) for full Node 20/22/24
- * LTS portability without native C++ addons, while meeting OWASP's recommended
- * memory-hard scrypt work factor.
+ * Memory & `maxmem` budget:
+ *   - Required allocation ≈ 128 * r * (N + p + 2) ≈ 67,112,960 bytes (~64.0 MiB).
+ *   - Node.js defaults `maxmem` to 32 MiB, which rejects N=65536, r=8.
+ *   - Explicit bounded ceiling: `SCRYPT_MAXMEM = 128 MiB` (134,217,728 bytes),
+ *     providing a 2x safety margin over the 64 MiB working set for OpenSSL's
+ *     `EVP_PBE_scrypt` headroom while strictly capping maximum RAM allocation.
+ *   - Both hash generation and hash verification enforce these exact parameters;
+ *     encoded hashes cannot request arbitrary N, r, p, or memory ceilings.
  */
 export const SCRYPT_N = 65536;
 export const SCRYPT_R = 8;
 export const SCRYPT_P = 2;
-const SCRYPT_SALT_BYTES = 16;
-const SCRYPT_KEY_BYTES = 64;
-// Node's scrypt enforces maxmem >= 128 * N * r * 2 safety headroom; 256 MiB safely covers up to N=131072, r=8.
-const SCRYPT_MAXMEM = 256 * 1024 * 1024;
-const MAX_THEORETICAL_SCRYPT_BYTES = 128 * 1024 * 1024; // 128 MiB cap
+export const SCRYPT_SALT_BYTES = 16;
+export const SCRYPT_KEY_BYTES = 64;
+export const SCRYPT_MAXMEM = 128 * 1024 * 1024; // 128 MiB explicit bounded ceiling (~2x 64 MiB working set)
 
-const OWASP_MIN_P_BY_N: Readonly<Record<number, number>> = {
-  16384: 5, // 2^14 -> p >= 5 (16 MiB)
-  32768: 3, // 2^15 -> p >= 3 (32 MiB)
-  65536: 2, // 2^16 -> p >= 2 (64 MiB) — active generation default
-  131072: 1, // 2^17 -> p >= 1 (128 MiB)
-};
+export function computeRequiredScryptMemory(
+  n: number,
+  r: number,
+  p: number
+): number {
+  return 128 * r * (n + p + 2);
+}
 
 const TIMESTAMP_PATTERN = /^\d{10,12}$/;
 const NONCE_PATTERN = /^[A-Za-z0-9_-]{22}$/; // 16 bytes base64url (unpadded)
@@ -87,7 +91,45 @@ function isPowerOfTwo(value: number): boolean {
   return value > 0 && (value & (value - 1)) === 0;
 }
 
-export async function hashPassphrase(passphrase: string): Promise<string> {
+export async function deriveScryptKey(
+  passphrase: string,
+  salt: Buffer,
+  params: { n: number; r: number; p: number; keyLength: number },
+  maxmem: number = SCRYPT_MAXMEM
+): Promise<Buffer> {
+  if (
+    !Number.isSafeInteger(maxmem) ||
+    maxmem <= 0 ||
+    maxmem > SCRYPT_MAXMEM
+  ) {
+    throw new Error(
+      `Invalid scrypt maxmem: must be a positive integer <= ${SCRYPT_MAXMEM} bytes.`
+    );
+  }
+
+  const requiredBytes = computeRequiredScryptMemory(
+    params.n,
+    params.r,
+    params.p
+  );
+  if (requiredBytes > maxmem) {
+    throw new Error(
+      `Insufficient scrypt maxmem (${maxmem} bytes) for required allocation (${requiredBytes} bytes).`
+    );
+  }
+
+  return scryptAsync(passphrase, salt, params.keyLength, {
+    N: params.n,
+    r: params.r,
+    p: params.p,
+    maxmem,
+  });
+}
+
+export async function hashPassphrase(
+  passphrase: string,
+  options?: { maxmem?: number }
+): Promise<string> {
   if (
     typeof passphrase !== "string" ||
     passphrase.length === 0 ||
@@ -97,12 +139,17 @@ export async function hashPassphrase(passphrase: string): Promise<string> {
   }
 
   const salt = randomBytes(SCRYPT_SALT_BYTES);
-  const derivedKey = await scryptAsync(passphrase, salt, SCRYPT_KEY_BYTES, {
-    N: SCRYPT_N,
-    r: SCRYPT_R,
-    p: SCRYPT_P,
-    maxmem: SCRYPT_MAXMEM,
-  });
+  const derivedKey = await deriveScryptKey(
+    passphrase,
+    salt,
+    {
+      n: SCRYPT_N,
+      r: SCRYPT_R,
+      p: SCRYPT_P,
+      keyLength: SCRYPT_KEY_BYTES,
+    },
+    options?.maxmem ?? SCRYPT_MAXMEM
+  );
 
   return `scrypt:${SCRYPT_N}:${SCRYPT_R}:${SCRYPT_P}:${salt.toString("hex")}:${derivedKey.toString("hex")}`;
 }
@@ -123,26 +170,24 @@ export function parsePassphraseHash(encoded: string): ParsedPassphraseHash | nul
   const saltHex = parts[4];
   const keyHex = parts[5];
 
-  const minP = OWASP_MIN_P_BY_N[n];
+  // Strictly enforce exact approved OWASP parameters so encoded hashes can
+  // neither downgrade the work factor nor request arbitrary memory allocation.
   if (
     !Number.isSafeInteger(n) ||
     !Number.isSafeInteger(r) ||
     !Number.isSafeInteger(p) ||
     !isPowerOfTwo(n) ||
-    minP === undefined ||
-    r < 8 ||
-    r > 16 ||
-    p < minP ||
-    p > 10 ||
-    128 * n * r > MAX_THEORETICAL_SCRYPT_BYTES
+    n !== SCRYPT_N ||
+    r !== SCRYPT_R ||
+    p !== SCRYPT_P ||
+    computeRequiredScryptMemory(n, r, p) > SCRYPT_MAXMEM
   ) {
     return null;
   }
 
   if (
     !HEX_PATTERN.test(saltHex) ||
-    saltHex.length % 2 !== 0 ||
-    saltHex.length < SCRYPT_SALT_BYTES * 2 ||
+    saltHex.length !== SCRYPT_SALT_BYTES * 2 ||
     !HEX_PATTERN.test(keyHex) ||
     keyHex.length !== SCRYPT_KEY_BYTES * 2
   ) {
@@ -152,7 +197,10 @@ export function parsePassphraseHash(encoded: string): ParsedPassphraseHash | nul
   const salt = Buffer.from(saltHex, "hex");
   const derivedKey = Buffer.from(keyHex, "hex");
 
-  if (salt.length < SCRYPT_SALT_BYTES || derivedKey.length !== SCRYPT_KEY_BYTES) {
+  if (
+    salt.length !== SCRYPT_SALT_BYTES ||
+    derivedKey.length !== SCRYPT_KEY_BYTES
+  ) {
     return null;
   }
 
@@ -161,7 +209,8 @@ export function parsePassphraseHash(encoded: string): ParsedPassphraseHash | nul
 
 export async function verifyPassphrase(
   passphrase: string,
-  encodedHash: string
+  encodedHash: string,
+  options?: { maxmem?: number }
 ): Promise<boolean> {
   if (
     typeof passphrase !== "string" ||
@@ -176,16 +225,16 @@ export async function verifyPassphrase(
     return false;
   }
 
-  const candidateKey = await scryptAsync(
+  const candidateKey = await deriveScryptKey(
     passphrase,
     parsed.salt,
-    parsed.derivedKey.length,
     {
-      N: parsed.n,
+      n: parsed.n,
       r: parsed.r,
       p: parsed.p,
-      maxmem: SCRYPT_MAXMEM,
-    }
+      keyLength: parsed.derivedKey.length,
+    },
+    options?.maxmem ?? SCRYPT_MAXMEM
   );
 
   if (candidateKey.length !== parsed.derivedKey.length) {

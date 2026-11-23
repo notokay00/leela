@@ -13,7 +13,7 @@ function scryptHash(passphrase) {
       passphrase,
       salt,
       64,
-      { N: 65536, r: 8, p: 2, maxmem: 256 * 1024 * 1024 },
+      { N: 65536, r: 8, p: 2, maxmem: 128 * 1024 * 1024 },
       (err, key) => {
         if (err) {
           reject(err);

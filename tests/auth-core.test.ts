@@ -1,12 +1,21 @@
 import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import {
+  computeRequiredScryptMemory,
   createSessionToken,
   DEFAULT_SESSION_TTL_SECONDS,
+  deriveScryptKey,
   hashPassphrase,
   MAX_CLOCK_SKEW_SECONDS,
   parsePassphraseHash,
+  SCRYPT_KEY_BYTES,
+  SCRYPT_MAXMEM,
+  SCRYPT_N,
+  SCRYPT_P,
+  SCRYPT_R,
+  SCRYPT_SALT_BYTES,
   verifyPassphrase,
   verifySessionToken,
 } from "../lib/auth/crypto.ts";
@@ -16,8 +25,18 @@ import {
   InMemoryRateLimiter,
 } from "../lib/auth/rate-limit.ts";
 
-describe("Passphrase hashing and verification (async scrypt)", () => {
-  it("hashes and verifies an ephemeral passphrase with OWASP scrypt:65536:8:2", async () => {
+describe("Passphrase hashing, verification, and maxmem bounds (async scrypt)", () => {
+  it("hashes and verifies an ephemeral passphrase with OWASP scrypt:65536:8:2 and bounded 128 MiB maxmem", async () => {
+    assert.equal(SCRYPT_N, 65536);
+    assert.equal(SCRYPT_R, 8);
+    assert.equal(SCRYPT_P, 2);
+    assert.equal(SCRYPT_SALT_BYTES, 16);
+    assert.equal(SCRYPT_KEY_BYTES, 64);
+    assert.equal(SCRYPT_MAXMEM, 128 * 1024 * 1024);
+    assert.ok(
+      computeRequiredScryptMemory(SCRYPT_N, SCRYPT_R, SCRYPT_P) < SCRYPT_MAXMEM
+    );
+
     const ephemeral = randomBytes(18).toString("base64url");
     const encoded = await hashPassphrase(ephemeral);
 
@@ -28,7 +47,51 @@ describe("Passphrase hashing and verification (async scrypt)", () => {
     assert.equal(await verifyPassphrase("a".repeat(300), encoded), false);
   });
 
-  it("rejects tampered hashes, malformed strings, and below-OWASP scrypt parameters", async () => {
+  it("enforces insufficient and excessive maxmem limits on both generation and verification", async () => {
+    const ephemeral = randomBytes(16).toString("base64url");
+    const validHash = await hashPassphrase(ephemeral);
+
+    // Node's 32 MiB default is insufficient for N=65536, r=8 (~64 MiB required)
+    const nodeDefaultMaxmem = 32 * 1024 * 1024;
+    await assert.rejects(
+      () => hashPassphrase(ephemeral, { maxmem: nodeDefaultMaxmem }),
+      /Insufficient scrypt maxmem/
+    );
+    await assert.rejects(
+      () => verifyPassphrase(ephemeral, validHash, { maxmem: nodeDefaultMaxmem }),
+      /Insufficient scrypt maxmem/
+    );
+
+    // Exceeding the configured 128 MiB ceiling is rejected
+    await assert.rejects(
+      () =>
+        deriveScryptKey(
+          ephemeral,
+          randomBytes(16),
+          { n: SCRYPT_N, r: SCRYPT_R, p: SCRYPT_P, keyLength: SCRYPT_KEY_BYTES },
+          SCRYPT_MAXMEM + 1
+        ),
+      /Invalid scrypt maxmem/
+    );
+
+    // Zero or negative maxmem rejected
+    await assert.rejects(
+      () => hashPassphrase(ephemeral, { maxmem: 0 }),
+      /Invalid scrypt maxmem/
+    );
+  });
+
+  it("keeps generator script parameters strictly consistent with lib/auth/crypto.ts", () => {
+    const scriptSrc = readFileSync("scripts/generate-auth-env.mjs", "utf8");
+    assert.match(scriptSrc, /const SCRYPT_N = 65536;/);
+    assert.match(scriptSrc, /const SCRYPT_R = 8;/);
+    assert.match(scriptSrc, /const SCRYPT_P = 2;/);
+    assert.match(scriptSrc, /const SCRYPT_SALT_BYTES = 16;/);
+    assert.match(scriptSrc, /const SCRYPT_KEY_BYTES = 64;/);
+    assert.match(scriptSrc, /const SCRYPT_MAXMEM = 128 \* 1024 \* 1024;/);
+  });
+
+  it("rejects tampered hashes, malformed strings, downgraded params, and excessively expensive params", async () => {
     const ephemeral = randomBytes(16).toString("base64url");
     const encoded = await hashPassphrase(ephemeral);
     const parts = encoded.split(":");
@@ -38,23 +101,22 @@ describe("Passphrase hashing and verification (async scrypt)", () => {
     const tamperedKey = `${parts.slice(0, 5).join(":")}:${parts[5].slice(0, -1)}${lastChar}`;
     assert.equal(await verifyPassphrase(ephemeral, tamperedKey), false);
 
-    // Below-OWASP N=16384, r=8, p=1 must be rejected
-    const belowOwasp = `scrypt:16384:8:1:${parts[4]}:${parts[5]}`;
-    assert.equal(parsePassphraseHash(belowOwasp), null);
-    assert.equal(await verifyPassphrase(ephemeral, belowOwasp), false);
+    // Below-OWASP & non-matching parameters rejected
+    assert.equal(parsePassphraseHash(`scrypt:16384:8:1:${parts[4]}:${parts[5]}`), null);
+    assert.equal(parsePassphraseHash(`scrypt:65536:8:1:${parts[4]}:${parts[5]}`), null);
+    assert.equal(parsePassphraseHash(`scrypt:32768:8:3:${parts[4]}:${parts[5]}`), null);
 
-    // Below-OWASP N=65536, r=8, p=1 must be rejected (requires p >= 2)
-    const belowOwaspP = `scrypt:65536:8:1:${parts[4]}:${parts[5]}`;
-    assert.equal(parsePassphraseHash(belowOwaspP), null);
+    // Excessively expensive parameters (memory DoS) rejected
+    assert.equal(parsePassphraseHash(`scrypt:131072:8:1:${parts[4]}:${parts[5]}`), null);
+    assert.equal(parsePassphraseHash(`scrypt:262144:8:1:${parts[4]}:${parts[5]}`), null);
+    assert.equal(parsePassphraseHash(`scrypt:65536:32:2:${parts[4]}:${parts[5]}`), null);
+    assert.equal(parsePassphraseHash(`scrypt:65536:8:16:${parts[4]}:${parts[5]}`), null);
 
-    // Non-power-of-two N and excessive memory bounds rejected
+    // Malformed hashes, bad lengths, wrong algorithm rejected
     assert.equal(parsePassphraseHash(`scrypt:50000:8:2:${parts[4]}:${parts[5]}`), null);
-    assert.equal(parsePassphraseHash(`scrypt:131072:16:1:${parts[4]}:${parts[5]}`), null);
     assert.equal(parsePassphraseHash(`scrypt:65536:8:2:short:${parts[5]}`), null);
+    assert.equal(parsePassphraseHash(`scrypt:65536:8:2:${parts[4]}:deadbeef`), null);
     assert.equal(parsePassphraseHash("argon2id:malformed"), null);
-
-    // Valid alternative OWASP baseline (N=32768, r=8, p=3) parses cleanly
-    assert.ok(parsePassphraseHash(`scrypt:32768:8:3:${parts[4]}:${parts[5]}`) !== null);
   });
 });
 
