@@ -94,6 +94,19 @@ async function run() {
       homeHtml.includes(`nonce="${nonceMatch1[1]}"`),
       "Rendered HTML must propagate the exact per-request CSP nonce to Next.js scripts"
     );
+    assert.ok(
+      homeHtml.includes('type="password"'),
+      "Unauthenticated Threshold must render initial passphrase field"
+    );
+    assert.ok(
+      homeHtml.includes('for="archive-passphrase"') &&
+        homeHtml.includes("Passphrase</label>"),
+      "Unauthenticated Threshold must include accessible visually hidden label for passphrase input"
+    );
+    assert.ok(
+      !homeHtml.includes("with sound"),
+      "Unauthenticated Threshold must not reveal accepted entry choices"
+    );
 
     // Second request must receive a fresh, distinct nonce (no stale nonce reuse)
     const homeRes2 = await fetch(`${ORIGIN}/`);
@@ -205,7 +218,21 @@ async function run() {
 
     const cookiePair = setCookie.split(";")[0];
 
-    // 7. Authorized GET /archive -> 200 OK with fresh nonce-based CSP
+    // 7. Authorized GET / renders State 4 (Accepted) for session persistence & GET /archive -> 200 OK
+    const authHome = await fetch(`${ORIGIN}/`, {
+      headers: { cookie: cookiePair },
+    });
+    assert.equal(authHome.status, 200);
+    const authHomeHtml = await authHome.text();
+    assert.ok(
+      authHomeHtml.includes("with sound") && authHomeHtml.includes("in silence"),
+      "Authenticated reload on / must persist into State 4 (with sound / in silence)"
+    );
+    assert.ok(
+      !authHomeHtml.includes('type="password"'),
+      "Authenticated reload on / must not re-show the passphrase input"
+    );
+
     const authArchive = await fetch(`${ORIGIN}/archive`, {
       redirect: "manual",
       headers: { cookie: cookiePair },

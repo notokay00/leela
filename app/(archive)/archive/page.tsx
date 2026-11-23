@@ -14,7 +14,7 @@ export default async function ArchiveVerificationPage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-void px-6 py-16 text-center text-ink">
       <div className="w-full max-w-xl border border-hairline bg-chamber/70 px-8 py-14 sm:px-14">
-        <p className="font-mono text-xs tracking-[0.26em] text-brass uppercase">
+        <p className="font-mono text-xs tracking-[0.26em] text-ink-secondary uppercase">
           Authorized Session
         </p>
 
@@ -27,12 +27,12 @@ export default async function ArchiveVerificationPage() {
           className="mx-auto my-8 h-px w-12 bg-hairline"
         />
 
-        <p className="text-base leading-relaxed text-ink-muted">
+        <p className="text-base leading-relaxed text-ink-secondary">
           Server-side authorization verified. Exhibition rooms will be mounted in
           Phase 4.
         </p>
 
-        <p className="mt-8 font-mono text-[11px] tracking-[0.16em] text-ink-faint">
+        <p className="mt-8 font-mono text-[11px] tracking-[0.16em] text-ink-dim">
           Session expires · {expiresIso}
         </p>
       </div>

@@ -1,42 +1,186 @@
 @import "tailwindcss";
 
+/*
+ * THE ARCHIVE OF US — Design Token System ("LIGHT TABLE AT NIGHT")
+ *
+ * Four room ground palettes are defined here so the design foundation supports
+ * all rooms consistently while keeping the interface quieter than the artefacts.
+ */
+:root {
+  /* Room grounds */
+  --room-void: #070709;
+  --room-stillness: #0b0c0e;
+  --room-stillness-table: #131519;
+  --room-correspondence: #f3efe6;
+  --room-correspondence-surface: #ebe5d8;
+  --room-voices-film: #040405;
+  --room-cadenza: #070709;
+
+  /* Dark-room ink hierarchy */
+  --ink-primary: #eaecef;
+  --ink-secondary: #9a9fa8;
+  --ink-dim: #7c828d;
+  --ink-muted: #666c77;
+
+  /* Light-room (Correspondence) ink hierarchy */
+  --ink-paper-primary: #1a1816;
+  --ink-paper-secondary: #56514b;
+  --ink-paper-dim: #736d65;
+  --hairline-paper: rgba(26, 24, 22, 0.14);
+
+  /* Surfaces, hairlines & viewer tokens */
+  --surface-elevated: #111317;
+  --surface-viewer-backdrop: rgba(6, 7, 9, 0.96);
+  --surface-viewer: #101215;
+  --hairline-dark: rgba(234, 236, 239, 0.14);
+  --hairline-dark-strong: rgba(234, 236, 239, 0.34);
+
+  /* Focus & selection tokens (neutral cool archival light — no brass/gold) */
+  --focus-ring-dark: #d8dce3;
+  --focus-ring-light: #1a1816;
+  --focus-ring-width: 1px;
+  --focus-ring-offset: 3px;
+  --selection-dark-bg: rgba(234, 236, 239, 0.18);
+  --selection-light-bg: rgba(26, 24, 22, 0.12);
+
+  /* Fluid typography scale (desktop & mobile) */
+  --text-threshold-title: clamp(1.125rem, 0.95rem + 0.9vw, 1.5rem);
+  --text-display: clamp(1.75rem, 1.4rem + 1.4vw, 2.5rem);
+  --text-heading: clamp(1.25rem, 1.1rem + 0.6vw, 1.625rem);
+  --text-body: clamp(1rem, 0.97rem + 0.15vw, 1.125rem);
+  --text-poetry-devanagari: clamp(1.25rem, 1.12rem + 0.55vw, 1.5625rem);
+  --leading-poetry-devanagari: 2.15;
+  --text-ui: 0.875rem;
+  --text-mono: 0.75rem;
+
+  /* Responsive spacing & layout widths */
+  --space-page-x: clamp(1.25rem, 4vw, 3.5rem);
+  --space-page-y: clamp(2rem, 5vh, 4rem);
+  --space-section: clamp(2.5rem, 6vh, 5rem);
+  --max-width-reading: 42rem;
+  --max-width-index: 48rem;
+  --max-width-gallery: 84rem;
+
+  /* Reference breakpoints */
+  --breakpoint-sm: 40rem;
+  --breakpoint-md: 48rem;
+  --breakpoint-lg: 64rem;
+
+  /* Restrained motion timing */
+  --duration-fast: 180ms;
+  --duration-base: 340ms;
+  --duration-slow: 620ms;
+  --ease-archive: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Dynamic usable viewport height (updated via visualViewport when mobile keyboard opens) */
+  --threshold-vh: 100dvh;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-base: 0ms;
+    --duration-slow: 0ms;
+  }
+}
+
 @theme inline {
-  --color-void: #0b0b0d;
-  --color-chamber: #131317;
-  --color-matte: #1a1a20;
-  --color-ink: #eae4dc;
-  --color-ink-muted: #9d968c;
-  --color-ink-faint: #68625a;
-  --color-brass: #b89f7d;
-  --color-hairline: rgba(234, 228, 220, 0.11);
+  --color-void: var(--room-void);
+  --color-stillness: var(--room-stillness);
+  --color-light-table: var(--room-stillness-table);
+  --color-paper: var(--room-correspondence);
+  --color-paper-surface: var(--room-correspondence-surface);
+  --color-film: var(--room-voices-film);
+  --color-cadenza: var(--room-cadenza);
+  --color-chamber: var(--surface-elevated);
+
+  --color-ink: var(--ink-primary);
+  --color-ink-secondary: var(--ink-secondary);
+  --color-ink-dim: var(--ink-dim);
+  --color-ink-muted: var(--ink-muted);
+  --color-paper-ink: var(--ink-paper-primary);
+  --color-paper-ink-secondary: var(--ink-paper-secondary);
+
+  --color-hairline: var(--hairline-dark);
+  --color-hairline-strong: var(--hairline-dark-strong);
+  --color-focus: var(--focus-ring-dark);
 
   --font-serif: var(--font-eb-garamond), Georgia, "Times New Roman", serif;
-  --font-devanagari: var(--font-noto-devanagari), var(--font-eb-garamond), serif;
+  --font-sans: var(--font-ibm-plex-sans), system-ui, -apple-system, sans-serif;
   --font-mono: var(--font-ibm-plex-mono), ui-monospace, SFMono-Regular, monospace;
-  --font-hand: var(--font-la-belle-aurore), cursive;
+  --font-devanagari: var(--font-noto-devanagari), var(--font-eb-garamond), serif;
 }
 
 @layer base {
   html {
     color-scheme: dark;
-    background-color: var(--color-void);
-    color: var(--color-ink);
+    background-color: var(--room-void);
+    color: var(--ink-primary);
   }
 
   body {
-    background-color: var(--color-void);
-    color: var(--color-ink);
+    background-color: var(--room-void);
+    color: var(--ink-primary);
     font-family: var(--font-serif);
     text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
   }
 
   ::selection {
-    background-color: rgba(184, 159, 125, 0.28);
-    color: var(--color-ink);
+    background-color: var(--selection-dark-bg);
+    color: var(--ink-primary);
   }
 
   :focus-visible {
-    outline: 1px solid var(--color-brass);
-    outline-offset: 3px;
+    outline: var(--focus-ring-width) solid var(--focus-ring-dark);
+    outline-offset: var(--focus-ring-offset);
+  }
+}
+
+/* Threshold dynamic viewport & progressive entrance */
+.threshold-stage {
+  min-height: var(--threshold-vh);
+  padding-top: max(1.5rem, env(safe-area-inset-top));
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+  padding-left: max(var(--space-page-x), env(safe-area-inset-left));
+  padding-right: max(var(--space-page-x), env(safe-area-inset-right));
+}
+
+.threshold-title {
+  font-size: var(--text-threshold-title);
+}
+
+.threshold-fade {
+  transition-property: opacity, transform;
+  transition-duration: var(--duration-slow);
+  transition-timing-function: var(--ease-archive);
+}
+
+.threshold-control {
+  transition-property: opacity, color, border-color;
+  transition-duration: var(--duration-base);
+  transition-timing-function: var(--ease-archive);
+}
+
+@keyframes thresholdReveal {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.threshold-reveal {
+  animation: thresholdReveal var(--duration-slow) var(--ease-archive) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .threshold-reveal {
+    animation: none;
+  }
+  .threshold-fade,
+  .threshold-control {
+    transition-duration: 0ms;
   }
 }

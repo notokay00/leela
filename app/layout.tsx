@@ -1,8 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import {
   EB_Garamond,
   IBM_Plex_Mono,
-  La_Belle_Aurore,
+  IBM_Plex_Sans,
   Noto_Serif_Devanagari,
 } from "next/font/google";
 import { cn } from "@/lib/cn";
@@ -15,10 +15,10 @@ const ebGaramond = EB_Garamond({
   display: "swap",
 });
 
-const notoSerifDevanagari = Noto_Serif_Devanagari({
-  subsets: ["devanagari"],
-  weight: ["400", "500", "600"],
-  variable: "--font-noto-devanagari",
+const ibmPlexSans = IBM_Plex_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-ibm-plex-sans",
   display: "swap",
 });
 
@@ -29,10 +29,10 @@ const ibmPlexMono = IBM_Plex_Mono({
   display: "swap",
 });
 
-const laBelleAurore = La_Belle_Aurore({
-  subsets: ["latin"],
-  weight: ["400"],
-  variable: "--font-la-belle-aurore",
+const notoSerifDevanagari = Noto_Serif_Devanagari({
+  subsets: ["devanagari"],
+  weight: ["400", "500", "600"],
+  variable: "--font-noto-devanagari",
   display: "swap",
 });
 
@@ -51,6 +51,14 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  interactiveWidget: "resizes-content",
+  themeColor: "#070709",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -61,12 +69,12 @@ export default function RootLayout({
       lang="en"
       className={cn(
         ebGaramond.variable,
-        notoSerifDevanagari.variable,
+        ibmPlexSans.variable,
         ibmPlexMono.variable,
-        laBelleAurore.variable
+        notoSerifDevanagari.variable
       )}
     >
-      <body className="min-h-screen bg-void font-serif text-ink antialiased">
+      <body className="min-h-[100dvh] bg-void font-serif text-ink antialiased">
         {children}
       </body>
     </html>
