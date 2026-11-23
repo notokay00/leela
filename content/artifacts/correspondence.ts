@@ -41,8 +41,8 @@ export const CORRESPONDENCE_ARTIFACTS: readonly CorrespondenceArtifact[] = [
     title: "For You",
     language: "hi",
     script: "Devanagari",
-    publishStatus: "ready",
-    consentConfirmed: true,
+    publishStatus: "withheld",
+    consentConfirmed: false,
     pairedArtifactSlug: "leela-poem-film",
     curatorialNote:
       "Preserved verbatim from the earliest version of the archive.",
