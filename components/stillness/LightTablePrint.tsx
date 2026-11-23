@@ -168,7 +168,7 @@ export function LightTablePrint({
         </span>
       </button>
 
-      <span className="mt-2 font-mono text-[10px] tracking-[0.14em] text-ink-dim">
+      <span className="mt-2 font-mono text-[10px] tracking-[0.14em] text-ink-muted">
         {photo.catalogId}
       </span>
     </div>

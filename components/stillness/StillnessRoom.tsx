@@ -174,19 +174,19 @@ export function StillnessRoom({
       {isTestHarness && (
         <div
           role="note"
-          className="mb-8 border border-hairline-strong bg-chamber px-4 py-2.5 font-mono text-[11px] tracking-[0.2em] text-ink uppercase"
+          className="mb-6 border-b border-hairline pb-2 font-mono text-[10px] tracking-[0.22em] text-ink-secondary uppercase"
         >
           TEST FIXTURES — NOT ARCHIVE CONTENT
         </div>
       )}
 
-      {/* Room title & single-mode switcher */}
-      <div className="mb-10 flex flex-col gap-5 sm:mb-12 sm:flex-row sm:items-end sm:justify-between">
+      {/* Quiet room title & restrained single-mode switcher */}
+      <div className="mb-7 flex flex-col gap-4 sm:mb-9 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-serif text-3xl font-normal tracking-[0.04em] text-ink sm:text-4xl">
+          <h1 className="font-serif text-2xl font-normal tracking-[0.04em] text-ink sm:text-[1.95rem]">
             Stillness
           </h1>
-          <p className="mt-2 font-mono text-[11px] tracking-[0.16em] text-ink-dim uppercase">
+          <p className="mt-1.5 font-mono text-[10px] tracking-[0.18em] text-ink-dim uppercase">
             {photos.length === 0
               ? "AU/I · 0 photographs"
               : `AU/I · ${photos.length} ${photos.length === 1 ? "photograph" : "photographs"}`}
@@ -207,9 +207,9 @@ export function StillnessRoom({
                 setActivePhotoId(null);
               }}
               className={cn(
-                "threshold-control cursor-pointer border-b pb-1 font-mono text-[11px] tracking-[0.2em] uppercase",
+                "threshold-control cursor-pointer border-b pb-1 font-mono text-[10px] tracking-[0.2em] uppercase",
                 mode === "contact-sheet"
-                  ? "border-ink text-ink"
+                  ? "border-ink-secondary text-ink"
                   : "border-transparent text-ink-dim hover:text-ink-secondary"
               )}
             >
@@ -224,9 +224,9 @@ export function StillnessRoom({
                 setActivePhotoId(null);
               }}
               className={cn(
-                "threshold-control cursor-pointer border-b pb-1 font-mono text-[11px] tracking-[0.2em] uppercase",
+                "threshold-control cursor-pointer border-b pb-1 font-mono text-[10px] tracking-[0.2em] uppercase",
                 mode === "chronology"
-                  ? "border-ink text-ink"
+                  ? "border-ink-secondary text-ink"
                   : "border-transparent text-ink-dim hover:text-ink-secondary"
               )}
             >
@@ -236,16 +236,15 @@ export function StillnessRoom({
         )}
       </div>
 
-      {/* The Living Light Table surface */}
+      {/* The Living Light Table surface — barely emerging from the #08090B studio */}
       <section
         ref={tableRef}
         aria-label="Stillness light table"
         data-viewer-open={viewerIndex !== null ? "true" : "false"}
         onPointerMove={handleTablePointerMove}
         onPointerLeave={handleTablePointerLeave}
-        className="light-table-plane px-4 py-8 sm:px-8 sm:py-12"
+        className="light-table-plane -mx-1 px-2.5 py-7 sm:mx-0 sm:px-7 sm:py-10"
       >
-        <div aria-hidden="true" className="light-table-ambient" />
         <div aria-hidden="true" className="light-table-glow" />
 
         <div className="relative z-[1]">

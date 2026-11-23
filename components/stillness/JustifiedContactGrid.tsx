@@ -15,7 +15,7 @@ export interface JustifiedContactGridProps {
   registerButtonRef: (photoId: string, node: HTMLButtonElement | null) => void;
 }
 
-const DESKTOP_GAP = 18;
+const DESKTOP_GAP = 22;
 const MOBILE_GAP = 12;
 
 export function JustifiedContactGrid({
@@ -28,7 +28,7 @@ export function JustifiedContactGrid({
   registerButtonRef,
 }: JustifiedContactGridProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [containerWidth, setContainerWidth] = useState<number>(960);
+  const [containerWidth, setContainerWidth] = useState<number>(880);
 
   useEffect(() => {
     const node = containerRef.current;
@@ -79,7 +79,7 @@ export function JustifiedContactGrid({
     <div
       ref={containerRef}
       data-has-active={activePhotoId ? "true" : "false"}
-      className="light-table-grid flex w-full flex-col gap-7 sm:gap-9"
+      className="light-table-grid flex w-full flex-col gap-7 sm:gap-10"
     >
       {rows.map((row, rowIndex) => (
         <div
@@ -88,7 +88,7 @@ export function JustifiedContactGrid({
           className={
             isCompact
               ? "flex w-full items-start gap-3"
-              : "flex w-full items-start gap-[18px]"
+              : "flex w-full items-start gap-[22px]"
           }
         >
           {row.items.map((item) => (

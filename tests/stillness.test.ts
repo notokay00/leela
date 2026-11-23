@@ -76,19 +76,32 @@ describe("Stillness justified contact-sheet layout engine", () => {
     }
   });
 
-  it("never stretches a sparse final row across the full container width", () => {
+  it("never stretches a sparse final row and balances its height against completed rows above", () => {
     const singleTail = [{ id: "solo-portrait", width: 600, height: 900 }];
-    const rows = computeJustifiedRows(singleTail, {
-      containerWidth: 1000,
-      targetRowHeight: 240,
-      gap: 18,
+    const soloRows = computeJustifiedRows(singleTail, {
+      containerWidth: 920,
+      targetRowHeight: 215,
+      gap: 22,
     });
 
-    assert.equal(rows.length, 1);
-    assert.equal(rows[0].isComplete, false);
-    assert.equal(rows[0].height, 240);
-    assert.equal(rows[0].items[0].width, 160);
-    assert.ok(rows[0].items[0].width < 300);
+    assert.equal(soloRows.length, 1);
+    assert.equal(soloRows[0].isComplete, false);
+    assert.equal(soloRows[0].height, 215);
+    assert.ok(soloRows[0].items[0].width < 200);
+
+    // Multi-row layout: incomplete final row must never loom taller than completed rows above
+    const multiRows = computeJustifiedRows(mixedPhotos, {
+      containerWidth: 920,
+      targetRowHeight: 215,
+      gap: 22,
+    });
+    const completed = multiRows.filter((r) => r.isComplete);
+    const tail = multiRows[multiRows.length - 1];
+    if (completed.length > 0 && !tail.isComplete) {
+      const avgCompleted =
+        completed.reduce((s, r) => s + r.height, 0) / completed.length;
+      assert.ok(tail.height <= avgCompleted + 0.01);
+    }
   });
 
   it("handles narrow mobile widths (360px and 390px) cleanly without horizontal overflow", () => {

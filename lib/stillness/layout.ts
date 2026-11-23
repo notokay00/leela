@@ -24,9 +24,9 @@ export interface JustifiedLayoutOptions {
   gap?: number;
 }
 
-const DEFAULT_DESKTOP_TARGET_HEIGHT = 240;
-const DEFAULT_MOBILE_TARGET_HEIGHT = 175;
-const DEFAULT_GAP = 18;
+const DEFAULT_DESKTOP_TARGET_HEIGHT = 215;
+const DEFAULT_MOBILE_TARGET_HEIGHT = 152;
+const DEFAULT_GAP = 22;
 const MOBILE_BREAKPOINT = 640;
 
 export function getDefaultTargetRowHeight(containerWidth: number): number {
@@ -114,13 +114,25 @@ export function computeJustifiedRows<T extends LayoutPhotoInput>(
     }
   }
 
-  // Sparse final row: keep natural target height (never stretch across container)
-  // while capping if a single wide item would exceed containerWidth.
+  // Sparse final row: never stretch across container AND never loom taller
+  // than completed rows above it so visual weight stays balanced across rows.
   if (currentBatch.length > 0) {
     const totalGap = gap * (currentBatch.length - 1);
     const availableWidth = Math.max(1, containerWidth - totalGap);
     const maxHeightThatFits = availableWidth / currentArSum;
-    const finalHeight = Math.min(targetRowHeight, maxHeightThatFits);
+
+    const completedRows = rows.filter((row) => row.isComplete);
+    const referenceRowHeight =
+      completedRows.length > 0
+        ? completedRows.reduce((sum, r) => sum + r.height, 0) /
+          completedRows.length
+        : targetRowHeight;
+
+    const finalHeight = Math.min(
+      targetRowHeight,
+      referenceRowHeight,
+      maxHeightThatFits
+    );
     const roundedHeight = Math.round(finalHeight * 100) / 100;
 
     const items: JustifiedRowItem<T>[] = currentBatch.map((entry) => ({

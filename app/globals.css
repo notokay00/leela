@@ -9,18 +9,20 @@
 :root {
   /* Room grounds */
   --room-void: #070709;
-  --room-stillness: #0b0c0e;
-  --room-stillness-table: #131519;
+  --room-stillness: #08090b;
+  --room-stillness-table: #0b0d10;
+  --room-stillness-elevated: #101216;
+  --room-stillness-hairline: #1a1d21;
   --room-correspondence: #f3efe6;
   --room-correspondence-surface: #ebe5d8;
   --room-voices-film: #040405;
   --room-cadenza: #070709;
 
   /* Dark-room ink hierarchy */
-  --ink-primary: #eaecef;
-  --ink-secondary: #9a9fa8;
-  --ink-dim: #7c828d;
-  --ink-muted: #666c77;
+  --ink-primary: #e6e3dc;
+  --ink-secondary: #888a8e;
+  --ink-dim: #6e7075;
+  --ink-muted: #56585d;
 
   /* Light-room (Correspondence) ink hierarchy */
   --ink-paper-primary: #1a1816;
@@ -29,18 +31,18 @@
   --hairline-paper: rgba(26, 24, 22, 0.14);
 
   /* Surfaces, hairlines & viewer tokens */
-  --surface-elevated: #111317;
-  --surface-viewer-backdrop: rgba(6, 7, 9, 0.96);
-  --surface-viewer: #101215;
-  --hairline-dark: rgba(234, 236, 239, 0.14);
-  --hairline-dark-strong: rgba(234, 236, 239, 0.34);
+  --surface-elevated: #101216;
+  --surface-viewer-backdrop: rgba(6, 7, 9, 0.97);
+  --surface-viewer: #0c0e11;
+  --hairline-dark: #1a1d21;
+  --hairline-dark-strong: rgba(230, 227, 220, 0.28);
 
   /* Focus & selection tokens (neutral cool archival light — no brass/gold) */
-  --focus-ring-dark: #d8dce3;
+  --focus-ring-dark: #d6d4ce;
   --focus-ring-light: #1a1816;
   --focus-ring-width: 1px;
   --focus-ring-offset: 3px;
-  --selection-dark-bg: rgba(234, 236, 239, 0.18);
+  --selection-dark-bg: rgba(230, 227, 220, 0.16);
   --selection-light-bg: rgba(26, 24, 22, 0.12);
 
   /* Fluid typography scale (desktop & mobile) */
@@ -54,12 +56,12 @@
   --text-mono: 0.75rem;
 
   /* Responsive spacing & layout widths */
-  --space-page-x: clamp(1.25rem, 4vw, 3.5rem);
+  --space-page-x: clamp(1rem, 4vw, 3.5rem);
   --space-page-y: clamp(2rem, 5vh, 4rem);
   --space-section: clamp(2.5rem, 6vh, 5rem);
   --max-width-reading: 42rem;
   --max-width-index: 48rem;
-  --max-width-gallery: 84rem;
+  --max-width-gallery: 64rem;
 
   /* Reference breakpoints */
   --breakpoint-sm: 40rem;
@@ -223,13 +225,22 @@
 
 /* Persistent Audio Dock safe-area positioning */
 .audio-dock-position {
+  left: max(1rem, env(safe-area-inset-left));
   right: max(1rem, env(safe-area-inset-right));
-  bottom: max(1rem, env(safe-area-inset-bottom));
-  max-width: calc(100vw - 2rem);
+  bottom: max(0.875rem, env(safe-area-inset-bottom));
+}
+
+@media (min-width: 40rem) {
+  .audio-dock-position {
+    left: auto;
+    right: max(1.5rem, env(safe-area-inset-right));
+    bottom: max(1.25rem, env(safe-area-inset-bottom));
+    max-width: calc(100% - 3rem);
+  }
 }
 
 /* ==========================================================================
-   STILLNESS — THE LIVING LIGHT TABLE (2.5D Darkroom Surface)
+   STILLNESS — THE LIVING LIGHT TABLE (Darkroom Nocturnal 2.5D Surface)
    ========================================================================== */
 
 .stillness-stage {
@@ -243,59 +254,52 @@
   padding-right: max(var(--space-page-x), env(safe-area-inset-right));
 }
 
+/*
+ * The light table barely emerges from the #08090B room: #0B0D10 surface with
+ * no outer card border—just a whisper-subtle hairline above and below so the
+ * photographs catch the light without looking boxed inside a grey slab.
+ */
 .light-table-plane {
   position: relative;
   background-color: var(--room-stillness-table);
-  border-top: 1px solid rgba(234, 236, 239, 0.08);
-  border-bottom: 1px solid rgba(234, 236, 239, 0.06);
-  box-shadow:
-    inset 0 1px 0 rgba(234, 236, 239, 0.05),
-    inset 0 0 80px rgba(0, 0, 0, 0.45);
-  perspective: 1400px;
+  border-top: 1px solid var(--room-stillness-hairline);
+  border-bottom: 1px solid rgba(26, 29, 33, 0.7);
+  perspective: 1500px;
   transition:
     opacity var(--duration-base) var(--ease-archive),
     transform var(--duration-base) var(--ease-archive);
 }
 
 .light-table-plane[data-viewer-open="true"] {
-  opacity: 0.24;
-  transform: scale(0.992);
+  opacity: 0.2;
+  transform: scale(0.994);
 }
 
-/* Bounded diffused light layer — never extends past the table */
+/*
+ * Deliberate, localised cool-white radial glow discovered as the pointer moves.
+ * Strictly contained inside the table plane; zero glare, zero visible edge.
+ */
 .light-table-glow {
   pointer-events: none;
   position: absolute;
   inset: 0;
   overflow: hidden;
   background: radial-gradient(
-    420px circle at var(--table-light-x, 50%) var(--table-light-y, 50%),
-    rgba(234, 236, 239, 0.075) 0%,
-    rgba(210, 218, 228, 0.028) 38%,
-    transparent 72%
+    320px circle at var(--table-light-x, 50%) var(--table-light-y, 50%),
+    rgba(230, 227, 220, 0.048) 0%,
+    rgba(220, 224, 230, 0.016) 36%,
+    transparent 68%
   );
   opacity: var(--table-light-opacity, 0);
   transition: opacity var(--duration-slow) var(--ease-archive);
 }
 
-/* Subtle static darkroom glass ambience when pointer light is inactive / touch / reduced-motion */
-.light-table-ambient {
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    ellipse 85% 65% at 50% 35%,
-    rgba(234, 236, 239, 0.03) 0%,
-    transparent 75%
-  );
-}
-
-/* Physical photographic print resting just above the light table */
+/* Physical photographic print resting quietly above the darkroom table */
 .light-table-print {
   position: relative;
   display: block;
   flex-shrink: 0;
-  background-color: #090a0c;
+  background-color: #07080a;
   padding: 0;
   border: 0;
   text-align: left;
@@ -303,9 +307,9 @@
   transform: translate3d(0, 0, 0) rotateX(var(--tilt-x, 0deg))
     rotateY(var(--tilt-y, 0deg));
   box-shadow:
-    0 8px 22px rgba(0, 0, 0, 0.58),
-    0 2px 5px rgba(0, 0, 0, 0.72),
-    0 0 0 1px rgba(234, 236, 239, 0.09);
+    0 6px 18px rgba(0, 0, 0, 0.62),
+    0 1px 3px rgba(0, 0, 0, 0.78),
+    0 0 0 1px rgba(230, 227, 220, 0.06);
   transition:
     transform var(--duration-base) var(--ease-archive),
     box-shadow var(--duration-base) var(--ease-archive),
@@ -319,7 +323,7 @@
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background-color: #0b0c0f;
+  background-color: #090a0d;
 }
 
 .light-table-print-sheen {
@@ -328,23 +332,23 @@
   inset: 0;
   background: radial-gradient(
     circle at var(--print-light-x, 50%) var(--print-light-y, 35%),
-    rgba(234, 236, 239, 0.09) 0%,
-    transparent 65%
+    rgba(230, 227, 220, 0.065) 0%,
+    transparent 62%
   );
   opacity: 0;
   transition: opacity var(--duration-base) var(--ease-archive);
 }
 
-/* Desktop fine-pointer lift & focused illumination */
+/* Desktop fine-pointer lift & restrained focused illumination */
 @media (hover: hover) and (pointer: fine) {
   .light-table-print:hover {
     z-index: 10;
-    transform: translate3d(0, -4px, 14px) rotateX(var(--tilt-x, 0deg))
+    transform: translate3d(0, -3px, 10px) rotateX(var(--tilt-x, 0deg))
       rotateY(var(--tilt-y, 0deg));
     box-shadow:
-      0 20px 42px rgba(0, 0, 0, 0.75),
-      0 6px 14px rgba(0, 0, 0, 0.65),
-      0 0 0 1px rgba(234, 236, 239, 0.24);
+      0 14px 32px rgba(0, 0, 0, 0.78),
+      0 4px 10px rgba(0, 0, 0, 0.68),
+      0 0 0 1px rgba(230, 227, 220, 0.16);
   }
 
   .light-table-print:hover .light-table-print-sheen {
@@ -352,35 +356,35 @@
   }
 }
 
-/* Keyboard focus equivalent — clear lift & crisp neutral outline */
+/* Keyboard focus equivalent — tactile lift & crisp neutral outline */
 .light-table-print:focus-visible {
   z-index: 10;
-  transform: translate3d(0, -3px, 10px);
+  transform: translate3d(0, -3px, 8px);
   box-shadow:
-    0 16px 34px rgba(0, 0, 0, 0.72),
-    0 4px 10px rgba(0, 0, 0, 0.62),
-    0 0 0 1px rgba(234, 236, 239, 0.3);
+    0 14px 28px rgba(0, 0, 0, 0.76),
+    0 3px 8px rgba(0, 0, 0, 0.64),
+    0 0 0 1px rgba(230, 227, 220, 0.24);
   outline: var(--focus-ring-width) solid var(--focus-ring-dark);
   outline-offset: 4px;
 }
 
 .light-table-print:focus-visible .light-table-print-sheen {
-  opacity: 0.75;
+  opacity: 0.7;
 }
 
-/* Subtle touch feedback on coarse pointer without faking hover */
+/* Subtle touch feedback on coarse pointer without simulating hover */
 @media (pointer: coarse) {
   .light-table-print:active {
     box-shadow:
-      0 10px 26px rgba(0, 0, 0, 0.68),
-      0 0 0 1px rgba(234, 236, 239, 0.22);
+      0 8px 20px rgba(0, 0, 0, 0.72),
+      0 0 0 1px rgba(230, 227, 220, 0.16);
   }
 }
 
-/* Gentle recession of neighbouring prints when one print is active */
+/* Restrained neighbouring-print dimming — never overly darkens unhovered prints */
 .light-table-grid[data-has-active="true"]
   .light-table-print:not([data-active="true"]) {
-  opacity: 0.76;
+  opacity: 0.9;
 }
 
 /* Selected print accent during viewer transition */
