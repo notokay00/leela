@@ -5,7 +5,6 @@ import {
   ARCHIVE_COLLECTION_DESCRIPTION,
   ARCHIVE_MOVEMENTS,
   getMovementHref,
-  type ArchiveMovementEntry,
 } from "../content/movements.ts";
 import {
   clampVolume,
@@ -35,18 +34,14 @@ describe("Milestone 2.2 Editorial Index structure and active-room rules", () => 
   });
 
   it("activates navigation links ONLY for implemented rooms and keeps unimplemented rooms inert", () => {
-    // In Milestone 2.2, no room is implemented yet so none produce dead links
-    for (const movement of ARCHIVE_MOVEMENTS) {
+    // Stillness (AU/I) is implemented in Milestone 2.3; remaining rooms stay inert
+    assert.equal(ARCHIVE_MOVEMENTS[0].implemented, true);
+    assert.equal(getMovementHref(ARCHIVE_MOVEMENTS[0]), "/archive/stillness");
+
+    for (const movement of ARCHIVE_MOVEMENTS.slice(1)) {
       assert.equal(movement.implemented, false);
       assert.equal(getMovementHref(movement), null);
     }
-
-    // When a room is explicitly implemented (Milestone 2.3+), href resolves cleanly
-    const activeStillness: ArchiveMovementEntry = {
-      ...ARCHIVE_MOVEMENTS[0],
-      implemented: true,
-    };
-    assert.equal(getMovementHref(activeStillness), "/archive/stillness");
   });
 
   it("defines distinct room-colour sliver rules in globals.css and mounts AudioDock at root layout", () => {

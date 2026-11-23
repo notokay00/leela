@@ -247,8 +247,36 @@ async function run() {
     assert.ok(archiveHtml.includes(`nonce="${archiveNonce[1]}"`), "/archive HTML must contain matching nonce");
     assert.ok(archiveHtml.includes("A collection of fragments and memories."));
     assert.ok(archiveHtml.includes("Stillness") && archiveHtml.includes("AU/I"));
+    assert.ok(archiveHtml.includes('href="/archive/stillness"'));
     assert.ok(archiveHtml.includes("Correspondence") && archiveHtml.includes("AU/II"));
     assert.ok(archiveHtml.includes("AU/III") && archiveHtml.includes("AU/IV"));
+
+    // 7b. Protected /archive/stillness requires auth & renders honest empty state in production
+    const unauthStillness = await fetch(`${ORIGIN}/archive/stillness`, {
+      redirect: "manual",
+    });
+    assert.equal(unauthStillness.status, 307);
+
+    const authStillness = await fetch(`${ORIGIN}/archive/stillness`, {
+      redirect: "manual",
+      headers: { cookie: cookiePair },
+    });
+    assert.equal(authStillness.status, 200);
+    const stillnessHtml = await authStillness.text();
+    assert.ok(stillnessHtml.includes("No photographs are available here yet."));
+    assert.ok(!stillnessHtml.includes("TEST FIXTURES"));
+
+    // 7c. Dev-only visual test harness and fixture API must be 404 in production
+    const prodHarness = await fetch(`${ORIGIN}/dev/stillness-harness`, {
+      headers: { cookie: cookiePair },
+    });
+    assert.equal(prodHarness.status, 404);
+
+    const prodFixture = await fetch(
+      `${ORIGIN}/api/dev/stillness-fixture/fixture-landscape-01`,
+      { headers: { cookie: cookiePair } }
+    );
+    assert.equal(prodFixture.status, 404);
 
     // 8. Lock endpoint origin, body validation, and cookie clearing
     const lockNoOrigin = await fetch(`${ORIGIN}/api/auth/lock`, {

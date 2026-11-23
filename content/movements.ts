@@ -26,7 +26,7 @@ export const ARCHIVE_MOVEMENTS: readonly ArchiveMovementEntry[] = [
     catalogueRef: "AU/I",
     description: "Photographs arranged on a darkroom light table.",
     groundToken: "stillness",
-    implemented: false,
+    implemented: true,
   },
   {
     slug: "correspondence",
