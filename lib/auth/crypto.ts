@@ -22,12 +22,29 @@ export const MIN_SESSION_SECRET_BYTES = 32;
 export const MAX_TOKEN_LENGTH = 512;
 export const MAX_PASSPHRASE_LENGTH = 256;
 
-const SCRYPT_N = 16384;
-const SCRYPT_R = 8;
-const SCRYPT_P = 1;
+/**
+ * OWASP Password Storage Cheat Sheet compliant scrypt baseline:
+ *   N = 65536 (2^16), r = 8, p = 2 (~64 MiB memory, ~185 ms on Node 24)
+ *
+ * Chosen over Node's built-in argon2id (added in Node 24.7) for full Node 20/22/24
+ * LTS portability without native C++ addons, while meeting OWASP's recommended
+ * memory-hard scrypt work factor.
+ */
+export const SCRYPT_N = 65536;
+export const SCRYPT_R = 8;
+export const SCRYPT_P = 2;
 const SCRYPT_SALT_BYTES = 16;
 const SCRYPT_KEY_BYTES = 64;
-const SCRYPT_MAXMEM = 64 * 1024 * 1024; // 64 MiB safety cap
+// Node's scrypt enforces maxmem >= 128 * N * r * 2 safety headroom; 256 MiB safely covers up to N=131072, r=8.
+const SCRYPT_MAXMEM = 256 * 1024 * 1024;
+const MAX_THEORETICAL_SCRYPT_BYTES = 128 * 1024 * 1024; // 128 MiB cap
+
+const OWASP_MIN_P_BY_N: Readonly<Record<number, number>> = {
+  16384: 5, // 2^14 -> p >= 5 (16 MiB)
+  32768: 3, // 2^15 -> p >= 3 (32 MiB)
+  65536: 2, // 2^16 -> p >= 2 (64 MiB) — active generation default
+  131072: 1, // 2^17 -> p >= 1 (128 MiB)
+};
 
 const TIMESTAMP_PATTERN = /^\d{10,12}$/;
 const NONCE_PATTERN = /^[A-Za-z0-9_-]{22}$/; // 16 bytes base64url (unpadded)
@@ -106,17 +123,18 @@ export function parsePassphraseHash(encoded: string): ParsedPassphraseHash | nul
   const saltHex = parts[4];
   const keyHex = parts[5];
 
+  const minP = OWASP_MIN_P_BY_N[n];
   if (
     !Number.isSafeInteger(n) ||
     !Number.isSafeInteger(r) ||
     !Number.isSafeInteger(p) ||
-    n < SCRYPT_N ||
-    n > 131072 ||
     !isPowerOfTwo(n) ||
+    minP === undefined ||
     r < 8 ||
-    r > 32 ||
-    p < 1 ||
-    p > 8
+    r > 16 ||
+    p < minP ||
+    p > 10 ||
+    128 * n * r > MAX_THEORETICAL_SCRYPT_BYTES
   ) {
     return null;
   }

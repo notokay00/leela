@@ -17,18 +17,18 @@ import {
 } from "../lib/auth/rate-limit.ts";
 
 describe("Passphrase hashing and verification (async scrypt)", () => {
-  it("hashes and verifies an ephemeral passphrase with timing-safe comparison", async () => {
+  it("hashes and verifies an ephemeral passphrase with OWASP scrypt:65536:8:2", async () => {
     const ephemeral = randomBytes(18).toString("base64url");
     const encoded = await hashPassphrase(ephemeral);
 
-    assert.match(encoded, /^scrypt:16384:8:1:[0-9a-f]{32}:[0-9a-f]{128}$/);
+    assert.match(encoded, /^scrypt:65536:8:2:[0-9a-f]{32}:[0-9a-f]{128}$/);
     assert.equal(await verifyPassphrase(ephemeral, encoded), true);
     assert.equal(await verifyPassphrase(`${ephemeral}-wrong`, encoded), false);
     assert.equal(await verifyPassphrase("", encoded), false);
     assert.equal(await verifyPassphrase("a".repeat(300), encoded), false);
   });
 
-  it("rejects tampered hashes and weak scrypt parameters", async () => {
+  it("rejects tampered hashes, malformed strings, and below-OWASP scrypt parameters", async () => {
     const ephemeral = randomBytes(16).toString("base64url");
     const encoded = await hashPassphrase(ephemeral);
     const parts = encoded.split(":");
@@ -38,10 +38,23 @@ describe("Passphrase hashing and verification (async scrypt)", () => {
     const tamperedKey = `${parts.slice(0, 5).join(":")}:${parts[5].slice(0, -1)}${lastChar}`;
     assert.equal(await verifyPassphrase(ephemeral, tamperedKey), false);
 
-    // Weak N parameter (< 16384)
-    const weakN = `scrypt:1024:8:1:${parts[4]}:${parts[5]}`;
-    assert.equal(parsePassphraseHash(weakN), null);
-    assert.equal(await verifyPassphrase(ephemeral, weakN), false);
+    // Below-OWASP N=16384, r=8, p=1 must be rejected
+    const belowOwasp = `scrypt:16384:8:1:${parts[4]}:${parts[5]}`;
+    assert.equal(parsePassphraseHash(belowOwasp), null);
+    assert.equal(await verifyPassphrase(ephemeral, belowOwasp), false);
+
+    // Below-OWASP N=65536, r=8, p=1 must be rejected (requires p >= 2)
+    const belowOwaspP = `scrypt:65536:8:1:${parts[4]}:${parts[5]}`;
+    assert.equal(parsePassphraseHash(belowOwaspP), null);
+
+    // Non-power-of-two N and excessive memory bounds rejected
+    assert.equal(parsePassphraseHash(`scrypt:50000:8:2:${parts[4]}:${parts[5]}`), null);
+    assert.equal(parsePassphraseHash(`scrypt:131072:16:1:${parts[4]}:${parts[5]}`), null);
+    assert.equal(parsePassphraseHash(`scrypt:65536:8:2:short:${parts[5]}`), null);
+    assert.equal(parsePassphraseHash("argon2id:malformed"), null);
+
+    // Valid alternative OWASP baseline (N=32768, r=8, p=3) parses cleanly
+    assert.ok(parsePassphraseHash(`scrypt:32768:8:3:${parts[4]}:${parts[5]}`) !== null);
   });
 });
 
