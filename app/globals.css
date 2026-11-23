@@ -184,3 +184,46 @@
     transition-duration: 0ms;
   }
 }
+
+/* Editorial Index & Room Top Bar layout spacing (safe-area & audio dock clearance) */
+.index-stage {
+  padding-top: max(var(--space-page-y), env(safe-area-inset-top));
+  padding-bottom: max(5.5rem, calc(env(safe-area-inset-bottom) + 4.5rem));
+  padding-left: max(var(--space-page-x), env(safe-area-inset-left));
+  padding-right: max(var(--space-page-x), env(safe-area-inset-right));
+}
+
+.room-top-bar {
+  padding-top: max(1.5rem, env(safe-area-inset-top));
+  padding-bottom: 1.5rem;
+  padding-left: max(var(--space-page-x), env(safe-area-inset-left));
+  padding-right: max(var(--space-page-x), env(safe-area-inset-right));
+}
+
+/* Room-colour slivers on the Editorial Index (distinct material ground samples) */
+.room-sliver-stillness {
+  background-color: var(--room-stillness-table);
+  box-shadow: inset 0 0 0 1px rgba(234, 236, 239, 0.24);
+}
+
+.room-sliver-correspondence {
+  background-color: var(--room-correspondence);
+  box-shadow: inset 0 0 0 1px rgba(234, 236, 239, 0.2);
+}
+
+.room-sliver-voices-film {
+  background-color: var(--room-voices-film);
+  box-shadow: inset 0 0 0 1px rgba(234, 236, 239, 0.18);
+}
+
+.room-sliver-cadenza {
+  background-color: var(--room-cadenza);
+  box-shadow: inset 0 0 0 1px rgba(234, 236, 239, 0.12);
+}
+
+/* Persistent Audio Dock safe-area positioning */
+.audio-dock-position {
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  max-width: calc(100vw - 2rem);
+}

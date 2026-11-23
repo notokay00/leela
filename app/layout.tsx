@@ -5,6 +5,12 @@ import {
   IBM_Plex_Sans,
   Noto_Serif_Devanagari,
 } from "next/font/google";
+import { AudioDock } from "@/components/audio/AudioDock";
+import { AudioProvider } from "@/components/audio/AudioProvider";
+import {
+  ARCHIVE_SCORE_ASSET_ID,
+  isAuthorizedAudioConfigured,
+} from "@/lib/audio/availability";
 import { cn } from "@/lib/cn";
 import "./globals.css";
 
@@ -64,6 +70,11 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const audioAvailable = isAuthorizedAudioConfigured();
+  const audioSrc = audioAvailable
+    ? `/api/media/${ARCHIVE_SCORE_ASSET_ID}`
+    : null;
+
   return (
     <html
       lang="en"
@@ -75,7 +86,10 @@ export default function RootLayout({
       )}
     >
       <body className="min-h-[100dvh] bg-void font-serif text-ink antialiased">
-        {children}
+        <AudioProvider available={audioAvailable} src={audioSrc}>
+          {children}
+          <AudioDock />
+        </AudioProvider>
       </body>
     </html>
   );

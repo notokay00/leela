@@ -245,8 +245,10 @@ async function run() {
     assert.notEqual(archiveNonce[1], nonceMatch1[1], "/archive must receive a fresh nonce");
     const archiveHtml = await authArchive.text();
     assert.ok(archiveHtml.includes(`nonce="${archiveNonce[1]}"`), "/archive HTML must contain matching nonce");
-    assert.ok(archiveHtml.includes("Authorized Session"));
-    assert.ok(archiveHtml.includes("Server-side authorization verified"));
+    assert.ok(archiveHtml.includes("A collection of fragments and memories."));
+    assert.ok(archiveHtml.includes("Stillness") && archiveHtml.includes("AU/I"));
+    assert.ok(archiveHtml.includes("Correspondence") && archiveHtml.includes("AU/II"));
+    assert.ok(archiveHtml.includes("AU/III") && archiveHtml.includes("AU/IV"));
 
     // 8. Lock endpoint origin, body validation, and cookie clearing
     const lockNoOrigin = await fetch(`${ORIGIN}/api/auth/lock`, {

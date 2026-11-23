@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { useAudio } from "@/components/audio/AudioProvider";
 import { cn } from "@/lib/cn";
 import {
   canSubmitPassphrase,
@@ -23,6 +24,7 @@ export function ThresholdExperience({
   audioAvailable,
 }: ThresholdExperienceProps) {
   const router = useRouter();
+  const { play: startAudioPlayback, enterInSilence } = useAudio();
   const [state, setState] = useState<ThresholdState>(() =>
     createInitialThresholdState(initialAuthenticated)
   );
@@ -123,6 +125,14 @@ export function ThresholdExperience({
     } catch {
       // Ignore storage restrictions in private browsing modes.
     }
+
+    if (action.shouldInitiateAudio) {
+      startAudioPlayback();
+      router.push("/archive");
+      return;
+    }
+
+    enterInSilence();
 
     if (action.notice) {
       setState((prev) => ({
