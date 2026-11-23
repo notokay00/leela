@@ -87,6 +87,7 @@ async function initLocalEnv() {
 
   const contents = [
     "# Local-only development configuration (gitignored; never commit)",
+    "APP_ORIGIN=http://localhost:3000",
     "STORAGE_DRIVER=local-fs",
     "LOCAL_MEDIA_ROOT=D:\\leela-archive-media",
     `ARCHIVE_PASSPHRASE_HASH=${passphraseHash}`,

@@ -3,6 +3,7 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { SESSION_COOKIE_NAME, verifySessionCookieValue } from "./session.ts";
+import { enforceSessionToken } from "./guard.ts";
 import type { SessionPayload } from "./crypto.ts";
 
 /**
@@ -21,9 +22,9 @@ export const getSession = cache(async (): Promise<SessionPayload | null> => {
  * Redirects unauthenticated requests to the Threshold route ("/").
  */
 export const requireSession = cache(async (): Promise<SessionPayload> => {
-  const session = await getSession();
-  if (!session) {
-    redirect("/");
-  }
-  return session;
+  const cookieStore = await cookies();
+  const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+  return enforceSessionToken(token, verifySessionCookieValue, () =>
+    redirect("/")
+  );
 });
