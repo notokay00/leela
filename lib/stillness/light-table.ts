@@ -16,6 +16,13 @@ export interface TableLightPosition {
   inside: boolean;
 }
 
+export interface FlashlightSpotlight {
+  x: number;
+  y: number;
+  radius: number;
+  active: boolean;
+}
+
 export type ViewerSwipeAction = "prev" | "next" | "close" | "none";
 
 /**
@@ -24,8 +31,78 @@ export type ViewerSwipeAction = "prev" | "next" | "close" | "none";
  */
 export const MAX_PRINT_TILT_DEG = 3.2;
 
+/**
+ * Per-photograph flashlight spotlight radius bounds (pixels).
+ * Desktop prints typically land in the 120-170px sweet spot, while narrow
+ * portrait thumbnails tighten gracefully so the beam never floods the print.
+ */
+export const MIN_FLASHLIGHT_RADIUS_PX = 96;
+export const DEFAULT_FLASHLIGHT_RADIUS_PX = 148;
+export const MAX_FLASHLIGHT_RADIUS_PX = 168;
+
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
+}
+
+/**
+ * Computes a sensible flashlight radius for a given rendered photograph box.
+ * Keeps desktop photographs around 120-168px while scaling down on narrower
+ * prints so the beam always feels localized rather than oversized.
+ */
+export function computeFlashlightRadius(
+  width: number,
+  height: number
+): number {
+  if (width <= 0 || height <= 0) {
+    return DEFAULT_FLASHLIGHT_RADIUS_PX;
+  }
+
+  const diagonal = Math.hypot(width, height);
+  return Math.round(
+    clamp(diagonal * 0.4, MIN_FLASHLIGHT_RADIUS_PX, MAX_FLASHLIGHT_RADIUS_PX)
+  );
+}
+
+/**
+ * Computes bounded local pixel coordinates and radius for the per-photograph
+ * flashlight mask relative to the actual visible image rectangle.
+ * Coordinates stay strictly constrained within [0, width] x [0, height].
+ */
+export function computeFlashlightSpotlight(
+  clientX: number,
+  clientY: number,
+  imageRect: RectBounds,
+  options?: { finePointer?: boolean }
+): FlashlightSpotlight {
+  const radius = computeFlashlightRadius(imageRect.width, imageRect.height);
+
+  if (
+    options?.finePointer === false ||
+    imageRect.width <= 0 ||
+    imageRect.height <= 0
+  ) {
+    return {
+      x: Math.round(Math.max(0, imageRect.width) / 2),
+      y: Math.round(Math.max(0, imageRect.height) / 2),
+      radius,
+      active: false,
+    };
+  }
+
+  const rawX = clientX - imageRect.left;
+  const rawY = clientY - imageRect.top;
+  const inside =
+    rawX >= 0 &&
+    rawX <= imageRect.width &&
+    rawY >= 0 &&
+    rawY <= imageRect.height;
+
+  return {
+    x: Math.round(clamp(rawX, 0, imageRect.width)),
+    y: Math.round(clamp(rawY, 0, imageRect.height)),
+    radius,
+    active: inside,
+  };
 }
 
 /**

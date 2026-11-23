@@ -7,6 +7,7 @@ import { LightTablePrint } from "./LightTablePrint";
 
 export interface JustifiedContactGridProps {
   photos: readonly StillnessClientPhoto[];
+  enableFlashlight: boolean;
   enableTilt: boolean;
   activePhotoId: string | null;
   selectedPhotoId: string | null;
@@ -20,6 +21,7 @@ const MOBILE_GAP = 12;
 
 export function JustifiedContactGrid({
   photos,
+  enableFlashlight,
   enableTilt,
   activePhotoId,
   selectedPhotoId,
@@ -97,6 +99,7 @@ export function JustifiedContactGrid({
               photo={item.photo}
               width={item.width}
               height={item.height}
+              enableFlashlight={enableFlashlight}
               enableTilt={enableTilt}
               isActive={activePhotoId === item.photo.id}
               isSelected={selectedPhotoId === item.photo.id}

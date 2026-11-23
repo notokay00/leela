@@ -276,8 +276,8 @@
 }
 
 /*
- * Deliberate, localised cool-white radial glow discovered as the pointer moves.
- * Strictly contained inside the table plane; zero glare, zero visible edge.
+ * Secondary, very subtle table-surface pointer ambience. Strictly subordinate
+ * to the per-photograph flashlight reveal.
  */
 .light-table-glow {
   pointer-events: none;
@@ -285,9 +285,9 @@
   inset: 0;
   overflow: hidden;
   background: radial-gradient(
-    320px circle at var(--table-light-x, 50%) var(--table-light-y, 50%),
-    rgba(230, 227, 220, 0.048) 0%,
-    rgba(220, 224, 230, 0.016) 36%,
+    300px circle at var(--table-light-x, 50%) var(--table-light-y, 50%),
+    rgba(230, 227, 220, 0.032) 0%,
+    rgba(220, 224, 230, 0.01) 38%,
     transparent 68%
   );
   opacity: var(--table-light-opacity, 0);
@@ -326,20 +326,58 @@
   background-color: #090a0d;
 }
 
-.light-table-print-sheen {
+/*
+ * Dual-layer flashlight compositing:
+ * 1. Base layer: original coloured photograph held deep in darkroom shadow
+ *    (0.34 brightness) so colour and form remain faintly recognisable without
+ *    desaturating into a grey box.
+ * 2. Illuminated layer: exact same original image at natural brightness (1.03),
+ *    revealed strictly through a feathered radial CSS mask centred on the
+ *    pointer and clipped inside .light-table-print-frame.
+ */
+.light-table-print-base {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
   pointer-events: none;
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    circle at var(--print-light-x, 50%) var(--print-light-y, 35%),
-    rgba(230, 227, 220, 0.065) 0%,
-    transparent 62%
-  );
-  opacity: 0;
-  transition: opacity var(--duration-base) var(--ease-archive);
+  filter: brightness(0.34);
 }
 
-/* Desktop fine-pointer lift & restrained focused illumination */
+.light-table-print-lit {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+  pointer-events: none;
+  filter: brightness(1.03);
+  opacity: var(--spot-opacity, 0);
+  -webkit-mask-image: radial-gradient(
+    circle var(--spot-radius, 148px) at var(--spot-x, 50%) var(--spot-y, 50%),
+    rgba(0, 0, 0, 1) 0%,
+    rgba(0, 0, 0, 0.94) 24%,
+    rgba(0, 0, 0, 0.62) 50%,
+    rgba(0, 0, 0, 0.2) 76%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  mask-image: radial-gradient(
+    circle var(--spot-radius, 148px) at var(--spot-x, 50%) var(--spot-y, 50%),
+    rgba(0, 0, 0, 1) 0%,
+    rgba(0, 0, 0, 0.94) 24%,
+    rgba(0, 0, 0, 0.62) 50%,
+    rgba(0, 0, 0, 0.2) 76%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  transition: opacity var(--duration-fast) var(--ease-archive);
+}
+
+/* Desktop fine-pointer lift & restrained print presence */
 @media (hover: hover) and (pointer: fine) {
   .light-table-print:hover {
     z-index: 10;
@@ -350,13 +388,9 @@
       0 4px 10px rgba(0, 0, 0, 0.68),
       0 0 0 1px rgba(230, 227, 220, 0.16);
   }
-
-  .light-table-print:hover .light-table-print-sheen {
-    opacity: 1;
-  }
 }
 
-/* Keyboard focus equivalent — tactile lift & crisp neutral outline */
+/* Keyboard focus equivalent — crisp neutral outline & centred illumination */
 .light-table-print:focus-visible {
   z-index: 10;
   transform: translate3d(0, -3px, 8px);
@@ -368,12 +402,30 @@
   outline-offset: 4px;
 }
 
-.light-table-print:focus-visible .light-table-print-sheen {
-  opacity: 0.7;
+.light-table-print:focus-visible:not(:hover) .light-table-print-lit {
+  opacity: 1;
+  -webkit-mask-image: radial-gradient(
+    circle farthest-side at 50% 50%,
+    rgba(0, 0, 0, 1) 0%,
+    rgba(0, 0, 0, 0.92) 46%,
+    rgba(0, 0, 0, 0.56) 76%,
+    rgba(0, 0, 0, 0.28) 100%
+  );
+  mask-image: radial-gradient(
+    circle farthest-side at 50% 50%,
+    rgba(0, 0, 0, 1) 0%,
+    rgba(0, 0, 0, 0.92) 46%,
+    rgba(0, 0, 0, 0.56) 76%,
+    rgba(0, 0, 0, 0.28) 100%
+  );
 }
 
-/* Subtle touch feedback on coarse pointer without simulating hover */
+/* Subtle touch feedback & restrained dim legibility on coarse pointer without simulating hover */
 @media (pointer: coarse) {
+  .light-table-print-base {
+    filter: brightness(0.38);
+  }
+
   .light-table-print:active {
     box-shadow:
       0 8px 20px rgba(0, 0, 0, 0.72),
@@ -381,16 +433,22 @@
   }
 }
 
-/* Restrained neighbouring-print dimming — never overly darkens unhovered prints */
+/* Restrained neighbouring-print dimming */
 .light-table-grid[data-has-active="true"]
   .light-table-print:not([data-active="true"]) {
-  opacity: 0.9;
+  opacity: 0.94;
 }
 
-/* Selected print accent during viewer transition */
+/* Selected print gives way gently to full natural brightness as viewer opens */
 .light-table-print[data-selected="true"] {
   z-index: 12;
   opacity: 1;
+}
+
+.light-table-print[data-selected="true"] .light-table-print-lit {
+  opacity: 1;
+  -webkit-mask-image: none;
+  mask-image: none;
 }
 
 /* Enlarged Light-Table Image Viewer */
@@ -434,6 +492,9 @@
   .light-table-print:focus-visible {
     transform: none;
     transition: none;
+  }
+  .light-table-print-lit {
+    transition-duration: 0ms;
   }
   .stillness-viewer-frame {
     animation: none;

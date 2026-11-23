@@ -69,6 +69,7 @@ export function StillnessRoom({
     };
   }, []);
 
+  const enableFlashlight = capabilities.finePointer;
   const enableLivingLight =
     capabilities.finePointer && !capabilities.reducedMotion;
 
@@ -257,6 +258,7 @@ export function StillnessRoom({
           ) : mode === "contact-sheet" ? (
             <JustifiedContactGrid
               photos={photos}
+              enableFlashlight={enableFlashlight}
               enableTilt={enableLivingLight}
               activePhotoId={activePhotoId}
               selectedPhotoId={selectedPhotoId}
@@ -281,6 +283,7 @@ export function StillnessRoom({
 
                   <JustifiedContactGrid
                     photos={group.items.map((item) => item.photo)}
+                    enableFlashlight={enableFlashlight}
                     enableTilt={false}
                     activePhotoId={activePhotoId}
                     selectedPhotoId={selectedPhotoId}

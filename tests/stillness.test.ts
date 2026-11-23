@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
+import { inflateSync } from "node:zlib";
 import {
   selectApprovedStillnessPhotos,
   STILLNESS_PHOTOS,
@@ -13,10 +14,14 @@ import {
 } from "../lib/stillness/chronology.ts";
 import { computeJustifiedRows } from "../lib/stillness/layout.ts";
 import {
+  computeFlashlightRadius,
+  computeFlashlightSpotlight,
   computePrintTilt,
   computeTableLightPosition,
   detectViewerSwipe,
+  MAX_FLASHLIGHT_RADIUS_PX,
   MAX_PRINT_TILT_DEG,
+  MIN_FLASHLIGHT_RADIUS_PX,
 } from "../lib/stillness/light-table.ts";
 import {
   renderSyntheticFixturePng,
@@ -220,6 +225,56 @@ describe("The Living Light Table 2.5D physics, bounds, and viewer swipe gestures
     assert.equal(detectViewerSwipe(12, 95), "close");
     assert.equal(detectViewerSwipe(15, 10), "none");
   });
+
+  it("computes bounded flashlight coordinates and image-scaled radii within target bounds", () => {
+    // Desktop landscape, square, and panoramic prints stay within ~120-170px
+    const landscapeRadius = computeFlashlightRadius(320, 214);
+    assert.ok(landscapeRadius >= 120 && landscapeRadius <= 170);
+
+    const squareRadius = computeFlashlightRadius(215, 215);
+    assert.ok(squareRadius >= 120 && squareRadius <= 170);
+
+    const panoramicRadius = computeFlashlightRadius(540, 202);
+    assert.ok(panoramicRadius >= 120 && panoramicRadius <= MAX_FLASHLIGHT_RADIUS_PX);
+
+    // Narrow portrait scales down sensibly without flooding the entire print
+    const narrowPortraitRadius = computeFlashlightRadius(140, 210);
+    assert.ok(
+      narrowPortraitRadius >= MIN_FLASHLIGHT_RADIUS_PX &&
+        narrowPortraitRadius < landscapeRadius
+    );
+
+    const imageRect = { left: 120, top: 80, width: 320, height: 214 };
+
+    // Pointer at centre
+    const center = computeFlashlightSpotlight(280, 187, imageRect, {
+      finePointer: true,
+    });
+    assert.equal(center.x, 160);
+    assert.equal(center.y, 107);
+    assert.equal(center.radius, landscapeRadius);
+    assert.equal(center.active, true);
+
+    // Pointer at exact top-left edge stays active and bounded at (0, 0)
+    const edge = computeFlashlightSpotlight(120, 80, imageRect, {
+      finePointer: true,
+    });
+    assert.deepEqual(edge, { x: 0, y: 0, radius: landscapeRadius, active: true });
+
+    // Pointer outside the visible image clamps coordinates and marks inactive
+    const outside = computeFlashlightSpotlight(600, 400, imageRect, {
+      finePointer: true,
+    });
+    assert.equal(outside.x, 320);
+    assert.equal(outside.y, 214);
+    assert.equal(outside.active, false);
+
+    // Coarse / touch pointer never activates hover spotlight
+    const touch = computeFlashlightSpotlight(280, 187, imageRect, {
+      finePointer: false,
+    });
+    assert.equal(touch.active, false);
+  });
 });
 
 describe("Stillness consent enforcement, privacy, and synthetic fixture isolation", () => {
@@ -271,26 +326,74 @@ describe("Stillness consent enforcement, privacy, and synthetic fixture isolatio
     }
   });
 
-  it("generates valid synthetic PNG calibration plates covering portrait, landscape, square, and panoramic", () => {
+  it("generates colourful synthetic PNG calibration plates covering portrait, landscape, square, and panoramic", () => {
     const ratios = SYNTHETIC_STILLNESS_FIXTURES.map((f) => f.width / f.height);
     assert.ok(ratios.some((r) => r < 0.8), "Must include portrait");
     assert.ok(ratios.some((r) => r > 1.3 && r < 2.0), "Must include landscape");
     assert.ok(ratios.some((r) => r === 1), "Must include square");
     assert.ok(ratios.some((r) => r >= 2.5), "Must include panoramic");
 
-    const samplePng = renderSyntheticFixturePng(SYNTHETIC_STILLNESS_FIXTURES[0]);
-    // Valid PNG magic header bytes
-    assert.deepEqual(
-      [...samplePng.subarray(0, 8)],
-      [137, 80, 78, 71, 13, 10, 26, 10]
-    );
+    for (const fixture of SYNTHETIC_STILLNESS_FIXTURES) {
+      const png = renderSyntheticFixturePng(fixture);
+      // Valid PNG magic header bytes
+      assert.deepEqual(
+        [...png.subarray(0, 8)],
+        [137, 80, 78, 71, 13, 10, 26, 10]
+      );
+
+      // Extract IDAT chunk and verify vivid chromatic diversity (not monochrome grey)
+      const w = png.readUInt32BE(16);
+      const h = png.readUInt32BE(20);
+      let offset = 8;
+      let idatPayload: Buffer | null = null;
+      while (offset < png.length) {
+        const len = png.readUInt32BE(offset);
+        const type = png.subarray(offset + 4, offset + 8).toString("ascii");
+        if (type === "IDAT") {
+          idatPayload = png.subarray(offset + 8, offset + 8 + len);
+          break;
+        }
+        offset += 12 + len;
+      }
+      assert.ok(idatPayload !== null, `Missing IDAT chunk for ${fixture.id}`);
+      const raw = inflateSync(idatPayload);
+      const stride = 1 + w * 3;
+      let colorfulPixels = 0;
+      let sampled = 0;
+      for (let y = 12; y < h - 12; y += 6) {
+        for (let x = 12; x < w - 12; x += 6) {
+          const px = y * stride + 1 + x * 3;
+          const r = raw[px];
+          const g = raw[px + 1];
+          const b = raw[px + 2];
+          const chroma = Math.max(r, g, b) - Math.min(r, g, b);
+          if (chroma >= 45) {
+            colorfulPixels++;
+          }
+          sampled++;
+        }
+      }
+      assert.ok(
+        colorfulPixels / Math.max(1, sampled) > 0.5,
+        `Fixture ${fixture.id} must be genuinely colourful (found ${colorfulPixels}/${sampled})`
+      );
+    }
   });
 
-  it("includes reduced-motion overrides for the Living Light Table in globals.css", () => {
+  it("includes dual-layer flashlight CSS mask rules, focus reveal, and reduced-motion overrides in globals.css", () => {
     const css = readFileSync("app/globals.css", "utf8");
     assert.ok(css.includes(".light-table-plane"));
-    assert.ok(css.includes(".light-table-print"));
-    assert.ok(css.includes(".light-table-glow"));
+    assert.ok(css.includes(".light-table-print-base"));
+    assert.ok(css.includes(".light-table-print-lit"));
+    assert.ok(css.includes("-webkit-mask-image:"));
+    assert.ok(css.includes("mask-image:"));
+    assert.ok(css.includes("radial-gradient("));
+    assert.ok(css.includes("--spot-radius"));
+    assert.ok(css.includes("--spot-x"));
+    assert.ok(css.includes("--spot-y"));
+    assert.ok(css.includes(".light-table-print:focus-visible:not(:hover)"));
     assert.ok(css.includes(".viewer-scroll-lock"));
+    // No white overlay sheen washing out original colours
+    assert.ok(!css.includes(".light-table-print-sheen"));
   });
 });
