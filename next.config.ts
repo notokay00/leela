@@ -1,18 +1,7 @@
 import type { NextConfig } from "next";
 
-const CONTENT_SECURITY_POLICY = [
-  "default-src 'self'",
-  "script-src 'self' 'unsafe-inline'",
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
-  "media-src 'self' blob:",
-  "font-src 'self'",
-  "connect-src 'self'",
-  "object-src 'none'",
-  "base-uri 'self'",
-  "form-action 'self'",
-  "frame-ancestors 'none'",
-].join("; ");
+const API_CONTENT_SECURITY_POLICY =
+  "default-src 'none'; frame-ancestors 'none'";
 
 const nextConfig: NextConfig = {
   async headers() {
@@ -20,10 +9,6 @@ const nextConfig: NextConfig = {
       {
         source: "/:path*",
         headers: [
-          {
-            key: "Content-Security-Policy",
-            value: CONTENT_SECURITY_POLICY,
-          },
           {
             key: "X-Robots-Tag",
             value: "noindex, nofollow, noarchive, noimageindex",
@@ -43,6 +28,15 @@ const nextConfig: NextConfig = {
           {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(), geolocation=()",
+          },
+        ],
+      },
+      {
+        source: "/api/:path*",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: API_CONTENT_SECURITY_POLICY,
           },
         ],
       },

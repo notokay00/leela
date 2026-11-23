@@ -1,6 +1,10 @@
+import { connection } from "next/server";
 import { cn } from "@/lib/cn";
 
-export default function ThresholdPlaceholderPage() {
+export default async function ThresholdPlaceholderPage() {
+  // Opt into dynamic rendering so Next.js injects the fresh per-request CSP nonce.
+  await connection();
+
   return (
     <main
       className={cn(

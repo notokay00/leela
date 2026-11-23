@@ -77,13 +77,31 @@ async function run() {
       throw new Error(`${err.message}\nServer stderr:\n${stderrBuf}`);
     });
 
-    // 1. CSP & security headers on /
+    // 1. Fresh per-request nonce-based CSP & security headers on /
     const homeRes = await fetch(`${ORIGIN}/`);
     assert.equal(homeRes.status, 200);
     const csp = homeRes.headers.get("content-security-policy") ?? "";
+    const nonceMatch1 = csp.match(/'nonce-([A-Za-z0-9+/=]+)'/);
+    assert.ok(nonceMatch1, "Missing nonce in CSP header");
     assert.ok(csp.includes("default-src 'self'"), "Missing default-src in CSP");
+    assert.ok(csp.includes("'strict-dynamic'"), "Missing strict-dynamic in CSP");
     assert.ok(csp.includes("frame-ancestors 'none'"), "Missing frame-ancestors in CSP");
-    assert.ok(!csp.includes("unsafe-eval"), "CSP must not allow unsafe-eval");
+    assert.ok(!csp.includes("unsafe-inline"), "Production CSP must not allow unsafe-inline");
+    assert.ok(!csp.includes("unsafe-eval"), "Production CSP must not allow unsafe-eval");
+
+    const homeHtml = await homeRes.text();
+    assert.ok(
+      homeHtml.includes(`nonce="${nonceMatch1[1]}"`),
+      "Rendered HTML must propagate the exact per-request CSP nonce to Next.js scripts"
+    );
+
+    // Second request must receive a fresh, distinct nonce (no stale nonce reuse)
+    const homeRes2 = await fetch(`${ORIGIN}/`);
+    const csp2 = homeRes2.headers.get("content-security-policy") ?? "";
+    const nonceMatch2 = csp2.match(/'nonce-([A-Za-z0-9+/=]+)'/);
+    assert.ok(nonceMatch2, "Missing nonce on second request");
+    assert.notEqual(nonceMatch1[1], nonceMatch2[1], "CSP nonce must be fresh per request");
+
     assert.equal(
       homeRes.headers.get("x-robots-tag"),
       "noindex, nofollow, noarchive, noimageindex"
@@ -187,13 +205,19 @@ async function run() {
 
     const cookiePair = setCookie.split(";")[0];
 
-    // 7. Authorized GET /archive -> 200 OK
+    // 7. Authorized GET /archive -> 200 OK with fresh nonce-based CSP
     const authArchive = await fetch(`${ORIGIN}/archive`, {
       redirect: "manual",
       headers: { cookie: cookiePair },
     });
     assert.equal(authArchive.status, 200);
+    const archiveCsp = authArchive.headers.get("content-security-policy") ?? "";
+    const archiveNonce = archiveCsp.match(/'nonce-([A-Za-z0-9+/=]+)'/);
+    assert.ok(archiveNonce, "Missing nonce in /archive CSP header");
+    assert.ok(!archiveCsp.includes("unsafe-inline"), "/archive CSP must not allow unsafe-inline");
+    assert.notEqual(archiveNonce[1], nonceMatch1[1], "/archive must receive a fresh nonce");
     const archiveHtml = await authArchive.text();
+    assert.ok(archiveHtml.includes(`nonce="${archiveNonce[1]}"`), "/archive HTML must contain matching nonce");
     assert.ok(archiveHtml.includes("Authorized Session"));
     assert.ok(archiveHtml.includes("Server-side authorization verified"));
 
