@@ -33,21 +33,21 @@ export const MAX_PRINT_TILT_DEG = 3.2;
 
 /**
  * Per-photograph flashlight spotlight radius bounds (pixels).
- * Wide and standard desktop prints reach the 150-190px range, while narrower
- * portrait/square thumbnails scale down sensibly so the beam remains localized.
+ * Scaled from the shorter image dimension so portrait, landscape, square, and
+ * wide panoramic prints all preserve a localized circular beam rather than
+ * clipping into a rectangular strip.
  */
-export const MIN_FLASHLIGHT_RADIUS_PX = 104;
-export const DEFAULT_FLASHLIGHT_RADIUS_PX = 168;
-export const MAX_FLASHLIGHT_RADIUS_PX = 190;
+export const MIN_FLASHLIGHT_RADIUS_PX = 55;
+export const DEFAULT_FLASHLIGHT_RADIUS_PX = 85;
+export const MAX_FLASHLIGHT_RADIUS_PX = 115;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
 /**
- * Computes a sensible flashlight radius for a given rendered photograph box.
- * Scales smoothly with image dimensions up to 190px on large/panoramic desktop
- * prints while keeping smaller prints localized rather than flooded.
+ * Computes a localized circular flashlight radius from the shorter rendered
+ * dimension of the photograph: clamp(min(width, height) * 0.45, 55, 115).
  */
 export function computeFlashlightRadius(
   width: number,
@@ -57,9 +57,9 @@ export function computeFlashlightRadius(
     return DEFAULT_FLASHLIGHT_RADIUS_PX;
   }
 
-  const diagonal = Math.hypot(width, height);
+  const shorterSide = Math.min(width, height);
   return Math.round(
-    clamp(diagonal * 0.46, MIN_FLASHLIGHT_RADIUS_PX, MAX_FLASHLIGHT_RADIUS_PX)
+    clamp(shorterSide * 0.45, MIN_FLASHLIGHT_RADIUS_PX, MAX_FLASHLIGHT_RADIUS_PX)
   );
 }
 

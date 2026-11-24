@@ -226,23 +226,23 @@ describe("The Living Light Table 2.5D physics, bounds, and viewer swipe gestures
     assert.equal(detectViewerSwipe(15, 10), "none");
   });
 
-  it("computes bounded flashlight coordinates and image-scaled radii within target bounds", () => {
-    // Desktop landscape and panoramic prints scale smoothly into the 150-190px beam range
-    const landscapeRadius = computeFlashlightRadius(320, 214);
-    assert.ok(landscapeRadius >= 150 && landscapeRadius <= MAX_FLASHLIGHT_RADIUS_PX);
+  it("computes bounded flashlight coordinates and shorter-dimension circular radii", () => {
+    // Shorter-dimension scaling preserves circular character on wide panoramic images
+    // TEST/04-like panoramic (365x137) and TEST/01-like landscape (205x137) share the same height -> same circular radius (62px)
+    const landscapeRadius = computeFlashlightRadius(205, 137);
+    const panoramicRadius = computeFlashlightRadius(365, 137);
+    assert.equal(landscapeRadius, 62);
+    assert.equal(panoramicRadius, 62);
+    assert.ok(panoramicRadius < 137 / 2);
 
-    const panoramicRadius = computeFlashlightRadius(540, 202);
-    assert.ok(panoramicRadius >= 150 && panoramicRadius <= MAX_FLASHLIGHT_RADIUS_PX);
+    // Narrow portrait (91x137) clamps cleanly at MIN_FLASHLIGHT_RADIUS_PX (55px)
+    const narrowPortraitRadius = computeFlashlightRadius(91, 137);
+    assert.equal(narrowPortraitRadius, MIN_FLASHLIGHT_RADIUS_PX);
 
-    // Compact square & narrow portrait prints scale down sensibly so the beam stays localized
-    const squareRadius = computeFlashlightRadius(215, 215);
-    assert.ok(squareRadius >= 130 && squareRadius <= 165);
-
-    const narrowPortraitRadius = computeFlashlightRadius(140, 210);
-    assert.ok(
-      narrowPortraitRadius >= MIN_FLASHLIGHT_RADIUS_PX &&
-        narrowPortraitRadius < landscapeRadius
-    );
+    // Larger prints scale up smoothly and cap at MAX_FLASHLIGHT_RADIUS_PX (115px)
+    const largeLandscapeRadius = computeFlashlightRadius(320, 214);
+    assert.equal(largeLandscapeRadius, 96);
+    assert.equal(computeFlashlightRadius(600, 400), MAX_FLASHLIGHT_RADIUS_PX);
 
     const imageRect = { left: 120, top: 80, width: 320, height: 214 };
 
@@ -252,14 +252,19 @@ describe("The Living Light Table 2.5D physics, bounds, and viewer swipe gestures
     });
     assert.equal(center.x, 160);
     assert.equal(center.y, 107);
-    assert.equal(center.radius, landscapeRadius);
+    assert.equal(center.radius, largeLandscapeRadius);
     assert.equal(center.active, true);
 
     // Pointer at exact top-left edge stays active and bounded at (0, 0)
     const edge = computeFlashlightSpotlight(120, 80, imageRect, {
       finePointer: true,
     });
-    assert.deepEqual(edge, { x: 0, y: 0, radius: landscapeRadius, active: true });
+    assert.deepEqual(edge, {
+      x: 0,
+      y: 0,
+      radius: largeLandscapeRadius,
+      active: true,
+    });
 
     // Pointer outside the visible image clamps coordinates and marks inactive
     const outside = computeFlashlightSpotlight(600, 400, imageRect, {
