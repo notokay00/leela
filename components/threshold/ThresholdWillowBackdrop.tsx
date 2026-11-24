@@ -1,16 +1,16 @@
 /**
- * Decorative sunlit fairy-tale weeping willow backdrop for the Threshold.
+ * Decorative sunlit lakeside weeping willow backdrop for the Threshold.
  *
- * - Combines cohesive hand-painted watercolor/gouache storybook artwork
- *   (purpose-composed separately for desktop landscape and mobile portrait)
- *   with lightweight, GPU-composited living afternoon-breeze overlays:
- *   translucent swaying willow fronds, softly shifting golden sunbeams, and
- *   sparingly placed drifting pollen motes.
+ * - Combines cohesive hand-painted watercolor/gouache literary storybook
+ *   landscapes (composed separately for widescreen desktop and portrait mobile)
+ *   with lightweight, GPU-composited living atmosphere overlays:
+ *   translucent swaying willow fronds, subtle calm lake water shimmer,
+ *   softly shifting morning sunlight, and sparingly placed pollen motes.
  * - Strictly decorative (`aria-hidden="true"`, `pointer-events-none`); never
  *   displays captions, tooltips, or text hints and never intercepts clicks or
  *   keyboard focus.
  * - Zero inline `style=""` attributes (strict nonce CSP compliant), zero
- *   animation libraries, and renders the complete static illustration under
+ *   animation libraries, and renders the complete static painting under
  *   `prefers-reduced-motion: reduce`.
  */
 
@@ -41,8 +41,8 @@ function round1(n: number): number {
 
 /**
  * Generates compact SVG path strings for delicate watercolor-tinted hanging
- * willow tendrils that layer gently along the painted willow's sunlit shoulders
- * so the hanging branches appear to sway naturally in a warm afternoon breeze.
+ * willow tendrils aligned to the painted willow's sunlit outer canopy so the
+ * cascading branches appear to sway softly in a spring morning breeze.
  */
 function buildBreezePaths(strands: readonly BreezeStrandSpec[]): {
   stemsPath: string;
@@ -119,103 +119,102 @@ function buildBreezePaths(strands: readonly BreezeStrandSpec[]): {
 }
 
 /**
- * Desktop living-breeze hanging fronds aligned to the sunlit outer cascading
- * veil of `threshold-garden-desktop.webp` (1376x768 coordinate space).
+ * Desktop living-breeze hanging fronds aligned to the sunlit overhanging canopy
+ * of `threshold-garden-desktop.webp` (1376x768 coordinate space, right-locked).
  */
 const DESKTOP_BREEZE_GROUPS: readonly BreezeGroupSpec[] = [
   {
-    id: "desk-sun-left",
+    id: "desk-lake-veil",
     swayClass: "willow-sway-1",
-    stemColor: "#8ea867",
-    leafColor: "#a8c173",
-    opacity: "0.46",
-    strands: [
-      { x0: 716, y0: 332, archX: -48, archY: -18, length: 288, tipDriftX: -14, leafStep: 17, leafLen: 21, seed: 1.4 },
-      { x0: 758, y0: 274, archX: -36, archY: -20, length: 326, tipDriftX: -10, leafStep: 17, leafLen: 22, seed: 2.7 },
-    ],
-  },
-  {
-    id: "desk-gold-mid-left",
-    swayClass: "willow-sway-2",
-    stemColor: "#a4b868",
-    leafColor: "#c8cf7d",
-    opacity: "0.48",
-    strands: [
-      { x0: 816, y0: 230, archX: -28, archY: -22, length: 344, tipDriftX: -8, leafStep: 17, leafLen: 23, seed: 3.5 },
-      { x0: 874, y0: 204, archX: -18, archY: -20, length: 328, tipDriftX: -5, leafStep: 18, leafLen: 22, seed: 4.8 },
-    ],
-  },
-  {
-    id: "desk-sage-crown",
-    swayClass: "willow-sway-3",
-    stemColor: "#6e945e",
-    leafColor: "#7ea668",
+    stemColor: "#7ea062",
+    leafColor: "#9cb96f",
     opacity: "0.42",
     strands: [
-      { x0: 942, y0: 158, archX: -12, archY: -18, length: 298, tipDriftX: -4, leafStep: 18, leafLen: 21, seed: 5.3 },
-      { x0: 1018, y0: 146, archX: 14, archY: -18, length: 288, tipDriftX: 6, leafStep: 18, leafLen: 21, seed: 6.1 },
+      { x0: 668, y0: 196, archX: -48, archY: -14, length: 304, tipDriftX: -14, leafStep: 18, leafLen: 21, seed: 1.4 },
+      { x0: 718, y0: 146, archX: -36, archY: -16, length: 356, tipDriftX: -10, leafStep: 18, leafLen: 22, seed: 2.7 },
     ],
   },
   {
-    id: "desk-emerald-right",
-    swayClass: "willow-sway-4",
-    stemColor: "#5e8556",
-    leafColor: "#6d9661",
+    id: "desk-clearing-arch",
+    swayClass: "willow-sway-2",
+    stemColor: "#8ea862",
+    leafColor: "#b8c775",
     opacity: "0.44",
     strands: [
-      { x0: 1174, y0: 248, archX: 28, archY: -16, length: 326, tipDriftX: 12, leafStep: 17, leafLen: 22, seed: 7.6 },
-      { x0: 1236, y0: 292, archX: 34, archY: -14, length: 304, tipDriftX: 16, leafStep: 17, leafLen: 21, seed: 8.9 },
+      { x0: 782, y0: 120, archX: -26, archY: -14, length: 368, tipDriftX: -8, leafStep: 18, leafLen: 22, seed: 3.5 },
+      { x0: 848, y0: 112, archX: -18, archY: -12, length: 344, tipDriftX: -5, leafStep: 18, leafLen: 21, seed: 4.8 },
     ],
   },
   {
-    id: "desk-outer-shimmer",
-    swayClass: "willow-sway-5",
-    stemColor: "#98b16a",
-    leafColor: "#bdd07e",
+    id: "desk-inner-drape",
+    swayClass: "willow-sway-3",
+    stemColor: "#6d935c",
+    leafColor: "#87ab69",
+    opacity: "0.4",
+    strands: [
+      { x0: 942, y0: 108, archX: -12, archY: -12, length: 288, tipDriftX: -4, leafStep: 18, leafLen: 20, seed: 5.3 },
+      { x0: 1018, y0: 102, archX: 10, archY: -10, length: 274, tipDriftX: 4, leafStep: 18, leafLen: 20, seed: 6.1 },
+    ],
+  },
+  {
+    id: "desk-outer-right",
+    swayClass: "willow-sway-4",
+    stemColor: "#5c8354",
+    leafColor: "#709761",
     opacity: "0.42",
     strands: [
-      { x0: 684, y0: 392, archX: -40, archY: -12, length: 244, tipDriftX: -16, leafStep: 17, leafLen: 20, seed: 9.2 },
-      { x0: 1286, y0: 332, archX: 36, archY: -12, length: 256, tipDriftX: 18, leafStep: 17, leafLen: 20, seed: 10.4 },
+      { x0: 1214, y0: 124, archX: 22, archY: -12, length: 294, tipDriftX: 10, leafStep: 18, leafLen: 21, seed: 7.6 },
+      { x0: 1292, y0: 148, archX: 26, archY: -10, length: 274, tipDriftX: 12, leafStep: 18, leafLen: 20, seed: 8.9 },
+    ],
+  },
+  {
+    id: "desk-sun-tip",
+    swayClass: "willow-sway-5",
+    stemColor: "#93ae68",
+    leafColor: "#c0ce7c",
+    opacity: "0.38",
+    strands: [
+      { x0: 632, y0: 256, archX: -36, archY: -10, length: 238, tipDriftX: -12, leafStep: 18, leafLen: 19, seed: 9.2 },
     ],
   },
 ];
 
 /**
- * Mobile living-breeze hanging fronds aligned to the sunlit cascading canopy
+ * Mobile living-breeze hanging fronds aligned to the lakeside willow canopy
  * of `threshold-garden-mobile.webp` (768x1376 coordinate space).
  */
 const MOBILE_BREEZE_GROUPS: readonly BreezeGroupSpec[] = [
   {
-    id: "mob-sage-left",
+    id: "mob-lake-overhang",
     swayClass: "willow-sway-1",
-    stemColor: "#6e9360",
-    leafColor: "#7ea56b",
+    stemColor: "#93ab66",
+    leafColor: "#bccb77",
     opacity: "0.44",
     strands: [
-      { x0: 196, y0: 716, archX: -38, archY: -14, length: 326, tipDriftX: -12, leafStep: 18, leafLen: 22, seed: 11.2 },
-      { x0: 248, y0: 668, archX: -28, archY: -16, length: 360, tipDriftX: -8, leafStep: 18, leafLen: 23, seed: 12.6 },
+      { x0: 294, y0: 760, archX: -36, archY: -12, length: 244, tipDriftX: -10, leafStep: 18, leafLen: 21, seed: 11.2 },
+      { x0: 356, y0: 688, archX: -28, archY: -14, length: 306, tipDriftX: -8, leafStep: 18, leafLen: 22, seed: 12.6 },
     ],
   },
   {
-    id: "mob-spring-mid",
+    id: "mob-clearing-veil",
     swayClass: "willow-sway-2",
-    stemColor: "#89aa65",
-    leafColor: "#a2be72",
+    stemColor: "#86a463",
+    leafColor: "#a8c173",
     opacity: "0.42",
     strands: [
-      { x0: 344, y0: 628, archX: -16, archY: -16, length: 318, tipDriftX: -4, leafStep: 18, leafLen: 22, seed: 13.4 },
-      { x0: 454, y0: 632, archX: 18, archY: -16, length: 330, tipDriftX: 6, leafStep: 18, leafLen: 22, seed: 14.8 },
+      { x0: 446, y0: 626, archX: -16, archY: -14, length: 318, tipDriftX: -4, leafStep: 18, leafLen: 21, seed: 13.4 },
+      { x0: 526, y0: 616, archX: 12, archY: -12, length: 292, tipDriftX: 4, leafStep: 18, leafLen: 21, seed: 14.8 },
     ],
   },
   {
-    id: "mob-gold-right",
+    id: "mob-right-bough",
     swayClass: "willow-sway-3",
-    stemColor: "#a6b868",
-    leafColor: "#cad27e",
-    opacity: "0.48",
+    stemColor: "#658b5b",
+    leafColor: "#7ca269",
+    opacity: "0.42",
     strands: [
-      { x0: 556, y0: 682, archX: 30, archY: -16, length: 368, tipDriftX: 10, leafStep: 18, leafLen: 23, seed: 15.1 },
-      { x0: 608, y0: 738, archX: 38, archY: -14, length: 312, tipDriftX: 14, leafStep: 18, leafLen: 22, seed: 16.5 },
+      { x0: 656, y0: 676, archX: 24, archY: -12, length: 292, tipDriftX: 8, leafStep: 18, leafLen: 21, seed: 15.1 },
+      { x0: 710, y0: 726, archX: 26, archY: -10, length: 256, tipDriftX: 10, leafStep: 18, leafLen: 20, seed: 16.5 },
     ],
   },
 ];
@@ -236,10 +235,10 @@ export function ThresholdWillowBackdrop() {
       aria-hidden="true"
       className="threshold-garden-layer pointer-events-none select-none"
     >
-      {/* Seamless luminous pastel sky continuation for tall mobile & ultra-wide screens */}
+      {/* Seamless luminous spring-morning sky continuation for tall mobile & ultra-wide screens */}
       <div className="threshold-storybook-sky" />
 
-      {/* Hand-painted watercolor & gouache storybook landscape (separate desktop & mobile compositions) */}
+      {/* Hand-painted watercolor & gouache lakeside willow sanctuary (desktop & portrait compositions) */}
       <picture className="threshold-garden-picture">
         <source
           media="(min-width: 48rem)"
@@ -256,7 +255,14 @@ export function ThresholdWillowBackdrop() {
         />
       </picture>
 
-      {/* Soft afternoon sunbeams & dappled canopy light shifting gently */}
+      {/* Gentle morning water light shimmer across the calm mountain lake */}
+      <div className="threshold-lake-layer">
+        <span className="threshold-lake-shimmer threshold-lake-shimmer-a" />
+        <span className="threshold-lake-shimmer threshold-lake-shimmer-b" />
+        <span className="threshold-lake-shimmer threshold-lake-shimmer-c" />
+      </div>
+
+      {/* Soft morning sunbeams filtering gently through the willow branches */}
       <div className="threshold-sunlight-veil">
         <div className="threshold-sunbeam threshold-sunbeam-a" />
         <div className="threshold-sunbeam threshold-sunbeam-b" />
@@ -280,7 +286,7 @@ export function ThresholdWillowBackdrop() {
               d={group.stemsPath}
               fill="none"
               stroke={group.stemColor}
-              strokeWidth="1.35"
+              strokeWidth="1.3"
               strokeLinecap="round"
             />
             <path d={group.leavesPath} fill={group.leafColor} />
@@ -306,7 +312,7 @@ export function ThresholdWillowBackdrop() {
               d={group.stemsPath}
               fill="none"
               stroke={group.stemColor}
-              strokeWidth="1.4"
+              strokeWidth="1.35"
               strokeLinecap="round"
             />
             <path d={group.leavesPath} fill={group.leafColor} />
@@ -314,7 +320,7 @@ export function ThresholdWillowBackdrop() {
         ))}
       </svg>
 
-      {/* Sparingly placed sunlit pollen motes drifting slowly through the warm afternoon air */}
+      {/* Sparingly placed sunlit pollen motes drifting slowly through the morning air */}
       <div className="threshold-pollen-layer">
         <span className="threshold-pollen-mote threshold-pollen-1" />
         <span className="threshold-pollen-mote threshold-pollen-2" />
@@ -322,10 +328,9 @@ export function ThresholdWillowBackdrop() {
         <span className="threshold-pollen-mote threshold-pollen-4" />
         <span className="threshold-pollen-mote threshold-pollen-5" />
         <span className="threshold-pollen-mote threshold-pollen-6" />
-        <span className="threshold-pollen-mote threshold-pollen-7" />
       </div>
 
-      {/* Gentle luminous sky veil behind foreground text for effortless contrast */}
+      {/* Softly feathered morning-sky readability veil framing foreground typography */}
       <div className="threshold-readability-veil" />
     </div>
   );

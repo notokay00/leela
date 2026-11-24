@@ -151,17 +151,18 @@ export function ThresholdExperience({
 
   const isPending = state.status === "pending";
   const isAccepted = state.status === "accepted";
+  const isRejected = state.status === "rejected" && Boolean(state.rejectionMessage);
 
   return (
     <main className="threshold-stage threshold-storybook threshold-reveal relative flex flex-col items-center justify-center overflow-hidden">
       <ThresholdWillowBackdrop />
 
       <div className="threshold-foreground relative z-10 flex w-full max-w-md flex-col items-center text-center">
-        <h1 className="threshold-title threshold-storybook-title font-serif font-normal tracking-[0.26em] text-[#241f19] uppercase">
+        <h1 className="threshold-title threshold-storybook-title font-serif font-medium tracking-[0.26em] text-[#181d17] uppercase">
           The Archive of Us
         </h1>
 
-        <div className="mt-10 w-full max-w-[17rem] sm:mt-12">
+        <div className="mt-8 w-full max-w-[17.5rem] sm:mt-9">
           {!isAccepted ? (
             <form
               onSubmit={handleSubmit}
@@ -195,11 +196,14 @@ export function ThresholdExperience({
                 spellCheck={false}
                 enterKeyHint="go"
                 placeholder="passphrase"
+                aria-invalid={isRejected ? "true" : undefined}
                 aria-describedby="threshold-status-message"
                 className={cn(
-                  "threshold-control threshold-storybook-input w-full border-0 border-b border-[#4a4033]/45 bg-transparent px-1 py-2.5 text-center font-sans text-sm tracking-[0.14em] text-[#241f19] placeholder:text-[#574c3f]",
-                  "focus:border-[#241f19] focus:outline-none focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-[#241f19]",
-                  isPending && "cursor-wait opacity-45"
+                  "threshold-control threshold-storybook-input w-full rounded-[3px] border border-[#242c22]/12 border-b-[#1b221a]/75 bg-[#fdfbf6]/72 px-3 py-2.5 text-center font-sans text-sm tracking-[0.14em] text-[#181d17] backdrop-blur-[5px] placeholder:text-[#343931]",
+                  "focus:border-[#181d17]/40 focus:border-b-[#181d17] focus:bg-[#fdfbf6]/90 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#181d17]",
+                  isRejected &&
+                    "border-[#7a1e17]/35 border-b-[#7a1e17] bg-[#fff8f6]/88",
+                  isPending && "cursor-wait opacity-55"
                 )}
               />
 
@@ -207,7 +211,10 @@ export function ThresholdExperience({
                 id="threshold-status-message"
                 role="status"
                 aria-live="polite"
-                className="mt-5 min-h-[1.25rem] font-sans text-xs tracking-[0.06em] text-[#55493b]"
+                className={cn(
+                  "threshold-status-text mt-4 min-h-[1.35rem] font-sans text-xs font-medium tracking-[0.05em]",
+                  isRejected ? "text-[#7a1e17]" : "text-[#2c3329]"
+                )}
               >
                 {isPending ? "Verifying…" : (state.rejectionMessage ?? "")}
               </p>
@@ -220,15 +227,15 @@ export function ThresholdExperience({
               <div
                 role="group"
                 aria-label="Choose how to enter the archive"
-                className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4"
+                className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3"
               >
                 <button
                   type="button"
                   disabled={isNavigating}
                   onClick={() => handleEntryChoice("sound")}
                   className={cn(
-                    "threshold-control cursor-pointer bg-transparent px-2 py-1.5 font-serif text-lg italic tracking-[0.04em] text-[#3f362c] hover:text-[#1d1813] focus-visible:outline-[#241f19]",
-                    isNavigating && "cursor-wait opacity-50"
+                    "threshold-control threshold-storybook-choice cursor-pointer rounded-[2px] bg-[#fdfbf6]/48 px-3.5 py-1.5 font-serif text-lg italic tracking-[0.04em] text-[#222921] backdrop-blur-[3px] hover:bg-[#fdfbf6]/78 hover:text-[#111510] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#181d17]",
+                    isNavigating && "cursor-wait opacity-55"
                   )}
                 >
                   with sound
@@ -239,8 +246,8 @@ export function ThresholdExperience({
                   disabled={isNavigating}
                   onClick={() => handleEntryChoice("silence")}
                   className={cn(
-                    "threshold-control cursor-pointer bg-transparent px-2 py-1.5 font-serif text-lg italic tracking-[0.04em] text-[#3f362c] hover:text-[#1d1813] focus-visible:outline-[#241f19]",
-                    isNavigating && "cursor-wait opacity-50"
+                    "threshold-control threshold-storybook-choice cursor-pointer rounded-[2px] bg-[#fdfbf6]/48 px-3.5 py-1.5 font-serif text-lg italic tracking-[0.04em] text-[#222921] backdrop-blur-[3px] hover:bg-[#fdfbf6]/78 hover:text-[#111510] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#181d17]",
+                    isNavigating && "cursor-wait opacity-55"
                   )}
                 >
                   in silence
@@ -250,7 +257,7 @@ export function ThresholdExperience({
               <p
                 role="status"
                 aria-live="polite"
-                className="mt-6 min-h-[1.25rem] font-sans text-xs tracking-[0.04em] text-[#55493b]"
+                className="threshold-status-text mt-5 min-h-[1.35rem] font-sans text-xs font-medium tracking-[0.04em] text-[#2c3329]"
               >
                 {state.audioFallbackNotice ?? ""}
               </p>

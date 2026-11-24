@@ -136,9 +136,11 @@ describe("Milestone 2.1 design tokens, reduced-motion, and literary preservation
 
     assert.ok(css.includes(".threshold-storybook"));
     assert.ok(css.includes(".willow-curtain"));
+    assert.ok(css.includes(".threshold-lake-shimmer"));
     assert.ok(css.includes(".threshold-sunbeam"));
     assert.ok(css.includes(".threshold-pollen-mote"));
     assert.ok(css.includes("willowBreezeA"));
+    assert.ok(css.includes("willowWaterRippleA"));
     assert.ok(css.includes("animation: none;"));
   });
 });
