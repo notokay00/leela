@@ -32,10 +32,6 @@ function EntryContent({ movement }: { movement: ArchiveMovementEntry }) {
         )}
       />
 
-      <span className="w-7 shrink-0 pt-0.5 font-serif text-lg text-ink-secondary sm:w-9 sm:pt-0">
-        {movement.numeral}.
-      </span>
-
       <div className="min-w-0 flex-1">
         <span className="block font-serif text-2xl font-normal tracking-[0.02em] text-ink sm:text-[1.65rem]">
           {movement.title}
@@ -44,18 +40,15 @@ function EntryContent({ movement }: { movement: ArchiveMovementEntry }) {
           {movement.description}
         </span>
       </div>
-
-      <span className="shrink-0 pt-1.5 font-mono text-xs tracking-[0.16em] text-ink-secondary sm:pt-0">
-        {movement.catalogueRef}
-      </span>
     </div>
   );
 }
 
 /**
- * Editorial Index — Wireframes v1.1, page 2.
- * Four visually equal typographic entries separated by quiet hairlines.
- * No cards, no dashboard grid, no forced I -> II -> III -> IV sequence.
+ * Editorial Index — Quiet literary table of contents for the four rooms.
+ * Internal movement identifiers, ordering, and routing remain intact in
+ * `content/movements.ts`, while the visible interface omits technical
+ * `AU/` catalogue codes and Roman numeral classifications.
  */
 export function EditorialIndex({ movements }: EditorialIndexProps) {
   return (
@@ -95,7 +88,7 @@ export function EditorialIndex({ movements }: EditorialIndexProps) {
                     >
                       <EntryContent movement={movement} />
                       <span className="sr-only">
-                        {movement.title} ({movement.catalogueRef}) is not yet open.
+                        {movement.title} is not yet open.
                       </span>
                     </div>
                   )}

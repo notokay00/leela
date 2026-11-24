@@ -90,4 +90,47 @@ describe("Milestone 2.1 design tokens, reduced-motion, and literary preservation
     assert.ok(ORIGINAL_FOR_YOU_POEM_TEXT.startsWith("तेरी आखों में जो देखा"));
     assert.ok(ORIGINAL_FOR_YOU_POEM_TEXT.endsWith("फ़ना हो जाना हो।"));
   });
+
+  it("renders the Threshold weeping willow strictly decoratively with reduced-motion support and no text hint", () => {
+    const backdrop = readFileSync(
+      "components/threshold/ThresholdWillowBackdrop.tsx",
+      "utf8"
+    );
+    const experience = readFileSync(
+      "components/threshold/ThresholdExperience.tsx",
+      "utf8"
+    );
+    const css = readFileSync("app/globals.css", "utf8");
+
+    const stripCommentsAndExpressions = (source: string) => {
+      const returnIdx = source.indexOf("return (");
+      const jsxSection = returnIdx >= 0 ? source.slice(returnIdx) : source;
+      return jsxSection
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        .replace(/\/\/.*$/gm, "")
+        .replace(/\{[^{}]*\}/g, "");
+    };
+
+    assert.ok(experience.includes("<ThresholdWillowBackdrop"));
+    assert.ok(backdrop.includes('aria-hidden="true"'));
+    assert.ok(backdrop.includes("pointer-events-none"));
+    assert.equal(backdrop.includes("style={{"), false);
+    assert.equal(backdrop.includes("<title"), false);
+    assert.equal(backdrop.includes("<desc"), false);
+    assert.equal(backdrop.includes("<text"), false);
+    assert.equal(backdrop.includes("aria-label"), false);
+    assert.equal(experience.toLowerCase().includes("willow"), true); // import name only
+    assert.equal(
+      />[^<]*willow[^<]*</i.test(stripCommentsAndExpressions(experience)),
+      false
+    );
+    assert.equal(
+      />[^<]*willow[^<]*</i.test(stripCommentsAndExpressions(backdrop)),
+      false
+    );
+
+    assert.ok(css.includes(".willow-curtain"));
+    assert.ok(css.includes("willowBreezeA"));
+    assert.ok(css.includes("animation: none;"));
+  });
 });

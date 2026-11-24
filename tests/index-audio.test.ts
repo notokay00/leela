@@ -60,6 +60,14 @@ describe("Milestone 2.2 Editorial Index structure and active-room rules", () => 
     const rootLayout = readFileSync("app/layout.tsx", "utf8");
     assert.ok(rootLayout.includes("<AudioProvider"));
     assert.ok(rootLayout.includes("<AudioDock"));
+
+    // Visible Editorial Index omits technical AU/ catalogue codes and Roman numerals
+    const indexComponent = readFileSync(
+      "components/index/EditorialIndex.tsx",
+      "utf8"
+    );
+    assert.equal(indexComponent.includes("movement.catalogueRef"), false);
+    assert.equal(indexComponent.includes("movement.numeral"), false);
   });
 });
 

@@ -246,10 +246,13 @@ async function run() {
     const archiveHtml = await authArchive.text();
     assert.ok(archiveHtml.includes(`nonce="${archiveNonce[1]}"`), "/archive HTML must contain matching nonce");
     assert.ok(archiveHtml.includes("A collection of fragments and memories."));
-    assert.ok(archiveHtml.includes("Stillness") && archiveHtml.includes("AU/I"));
+    assert.ok(archiveHtml.includes("Stillness"));
     assert.ok(archiveHtml.includes('href="/archive/stillness"'));
-    assert.ok(archiveHtml.includes("Correspondence") && archiveHtml.includes("AU/II"));
-    assert.ok(archiveHtml.includes("AU/III") && archiveHtml.includes("AU/IV"));
+    assert.ok(archiveHtml.includes("Correspondence"));
+    assert.ok(archiveHtml.includes('href="/archive/correspondence"'));
+    assert.ok(archiveHtml.includes("Voices &amp; Film") || archiveHtml.includes("Voices & Film"));
+    assert.ok(archiveHtml.includes("Cadenza"));
+    assert.ok(!archiveHtml.includes("AU/I") && !archiveHtml.includes("AU/II") && !archiveHtml.includes("AU/III") && !archiveHtml.includes("AU/IV"));
 
     // 7b. Protected /archive/stillness requires auth & renders honest empty state in production
     const unauthStillness = await fetch(`${ORIGIN}/archive/stillness`, {

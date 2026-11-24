@@ -11,6 +11,7 @@ import {
   resolveUnlockResponse,
   type ThresholdState,
 } from "@/lib/threshold/state";
+import { ThresholdWillowBackdrop } from "./ThresholdWillowBackdrop";
 
 export interface ThresholdExperienceProps {
   initialAuthenticated: boolean;
@@ -152,8 +153,10 @@ export function ThresholdExperience({
   const isAccepted = state.status === "accepted";
 
   return (
-    <main className="threshold-stage threshold-reveal flex flex-col items-center justify-center bg-void text-ink">
-      <div className="flex w-full max-w-md flex-col items-center text-center">
+    <main className="threshold-stage threshold-reveal relative flex flex-col items-center justify-center overflow-hidden bg-void text-ink">
+      <ThresholdWillowBackdrop />
+
+      <div className="threshold-foreground relative z-10 flex w-full max-w-md flex-col items-center text-center">
         <h1 className="threshold-title font-serif font-normal tracking-[0.26em] text-ink uppercase">
           The Archive of Us
         </h1>
@@ -194,7 +197,7 @@ export function ThresholdExperience({
                 placeholder="passphrase"
                 aria-describedby="threshold-status-message"
                 className={cn(
-                  "threshold-control w-full border-0 border-b border-hairline bg-transparent px-1 py-2.5 text-center font-sans text-sm tracking-[0.14em] text-ink placeholder:text-ink-dim",
+                  "threshold-control w-full border-0 border-b border-ink-muted/75 bg-transparent px-1 py-2.5 text-center font-sans text-sm tracking-[0.14em] text-ink placeholder:text-ink-secondary/80",
                   "focus:border-hairline-strong focus:outline-none focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-focus",
                   isPending && "cursor-wait opacity-40"
                 )}
