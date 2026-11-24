@@ -16,7 +16,13 @@
   --room-correspondence: #ede6d9;
   --room-correspondence-surface: #e5dccb;
   --room-correspondence-elevated: #f3eee5;
-  --room-voices-film: #040405;
+  --room-voices-film: #f6efe2;
+  --room-voices-film-surface: #efe5d3;
+  --room-voices-film-elevated: #fbf7ee;
+  --room-voices-film-hairline: #dfd2be;
+  --room-voices-film-terracotta: #b5684a;
+  --room-voices-film-ochre: #c28f48;
+  --room-voices-film-sage: #678069;
   --room-cadenza: #070709;
 
   /* Dark-room ink hierarchy */
@@ -31,6 +37,11 @@
   --ink-paper-muted: #6e6456;
   --ink-paper-dim: #887d6c;
   --hairline-paper: #cec4b4;
+
+  /* Voices & Film warm sunlit studio ink hierarchy */
+  --ink-vf-primary: #261f1a;
+  --ink-vf-secondary: #5f5146;
+  --ink-vf-muted: #756457;
 
   /* Surfaces, hairlines & viewer tokens */
   --surface-elevated: #101216;
@@ -108,6 +119,9 @@
   --color-paper-ink-muted: var(--ink-paper-muted);
   --color-paper-ink-dim: var(--ink-paper-dim);
   --color-paper-hairline: var(--hairline-paper);
+  --color-vf-ink: var(--ink-vf-primary);
+  --color-vf-ink-secondary: var(--ink-vf-secondary);
+  --color-vf-ink-muted: var(--ink-vf-muted);
 
   --color-hairline: var(--hairline-dark);
   --color-hairline-strong: var(--hairline-dark-strong);
@@ -1058,8 +1072,13 @@
 }
 
 .room-sliver-voices-film {
-  background-color: var(--room-voices-film);
-  box-shadow: inset 0 0 0 1px rgba(234, 236, 239, 0.18);
+  background: linear-gradient(
+    180deg,
+    #d6a168 0%,
+    #c67e58 55%,
+    #889e82 100%
+  );
+  box-shadow: inset 0 0 0 1px rgba(251, 247, 238, 0.24);
 }
 
 .room-sliver-cadenza {
@@ -1512,5 +1531,486 @@ body:has(.correspondence-stage) {
   .correspondence-ground-enter::before,
   .correspondence-content-enter {
     animation: none;
+  }
+}
+
+/* ==========================================================================
+   VOICES & FILM — WARM SUNLIT LISTENING & PRIVATE FILM ARCHIVE
+   ========================================================================== */
+
+@keyframes voicesFilmGroundEmerge {
+  0% {
+    background-color: #161311;
+  }
+  32% {
+    background-color: #5b483b;
+  }
+  68% {
+    background-color: #d6c3aa;
+  }
+  100% {
+    background-color: var(--room-voices-film);
+  }
+}
+
+@keyframes voicesFilmContentSettle {
+  0%,
+  20% {
+    opacity: 0;
+    transform: translate3d(0, 6px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+html:has(.voices-film-stage),
+body:has(.voices-film-stage) {
+  color-scheme: light;
+  background-color: var(--room-voices-film);
+  transition: background-color 950ms cubic-bezier(0.32, 0.08, 0.24, 1);
+}
+
+.voices-film-stage {
+  position: relative;
+  min-height: 100dvh;
+  color-scheme: light;
+  background-color: var(--room-voices-film);
+  color: var(--ink-vf-primary);
+  /* Generous bottom clearance so persistent AudioDock never obscures content */
+  padding-bottom: max(7.5rem, calc(env(safe-area-inset-bottom) + 6.5rem));
+}
+
+/* Warm afternoon window-light wash across the studio ceiling */
+.voices-film-stage::before {
+  content: "";
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-image:
+    radial-gradient(
+      ellipse 92% 58% at 18% 0%,
+      rgba(255, 244, 219, 0.72) 0%,
+      rgba(246, 239, 226, 0) 64%
+    ),
+    radial-gradient(
+      ellipse 70% 52% at 88% 18%,
+      rgba(235, 213, 189, 0.42) 0%,
+      rgba(246, 239, 226, 0) 68%
+    );
+}
+
+.voices-film-enter {
+  animation: voicesFilmGroundEmerge 1050ms cubic-bezier(0.32, 0.08, 0.24, 1)
+    both;
+}
+
+.voices-film-content-enter {
+  position: relative;
+  z-index: 1;
+  animation: voicesFilmContentSettle 1050ms cubic-bezier(0.32, 0.08, 0.24, 1)
+    both;
+}
+
+.voices-film-stage ::selection {
+  background-color: rgba(181, 104, 74, 0.18);
+  color: var(--ink-vf-primary);
+}
+
+.voices-film-stage :focus-visible {
+  outline: 2px solid var(--ink-vf-primary);
+  outline-offset: 3px;
+}
+
+.voices-film-container {
+  padding-left: max(var(--space-page-x), env(safe-area-inset-left));
+  padding-right: max(var(--space-page-x), env(safe-area-inset-right));
+}
+
+/* Effortless section jump pills (mobile-friendly >= 44px touch targets) */
+.vf-section-jump {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  border: 1px solid var(--room-voices-film-hairline);
+  background-color: rgba(251, 247, 238, 0.82);
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  line-height: 1.2;
+  color: var(--ink-vf-primary);
+  transition:
+    background-color var(--duration-fast) var(--ease-archive),
+    border-color var(--duration-fast) var(--ease-archive),
+    transform var(--duration-fast) var(--ease-archive);
+}
+
+.vf-section-jump:hover {
+  background-color: #fffcf6;
+  border-color: rgba(181, 104, 74, 0.45);
+  transform: translate3d(0, -1px, 0);
+}
+
+.vf-section-jump-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.vf-section-jump-listening .vf-section-jump-dot {
+  background-color: var(--room-voices-film-sage);
+}
+
+.vf-section-jump-playful .vf-section-jump-dot {
+  background-color: var(--room-voices-film-terracotta);
+}
+
+.vf-section-jump-noice .vf-section-jump-dot {
+  background-color: var(--room-voices-film-ochre);
+}
+
+/* Section I — "my personal singer" (intimate listening alcove) */
+.vf-section-listening {
+  border-radius: 1.25rem;
+  border: 1px solid rgba(103, 128, 105, 0.24);
+  background: linear-gradient(
+    180deg,
+    rgba(251, 247, 238, 0.92) 0%,
+    rgba(244, 236, 222, 0.78) 100%
+  );
+  padding: clamp(1.5rem, 3.8vw, 3rem);
+  box-shadow: 0 12px 34px rgba(72, 54, 38, 0.05);
+}
+
+.vf-listening-indicator {
+  display: inline-block;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 9999px;
+  background-color: var(--room-voices-film-sage);
+  box-shadow: 0 0 0 4px rgba(103, 128, 105, 0.16);
+  flex-shrink: 0;
+}
+
+.vf-empty-alcove {
+  border-top: 1px solid rgba(103, 128, 105, 0.2);
+  padding-top: 2.25rem;
+  padding-bottom: 1rem;
+}
+
+.vf-empty-alcove-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.25rem;
+}
+
+@media (min-width: 40rem) {
+  .vf-empty-alcove-inner {
+    flex-direction: row;
+    align-items: center;
+    gap: 1.75rem;
+  }
+}
+
+.vf-empty-listening-motif {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(103, 128, 105, 0.34);
+  background-color: rgba(255, 252, 245, 0.75);
+  flex-shrink: 0;
+}
+
+.vf-empty-listening-ring {
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(103, 128, 105, 0.26);
+}
+
+.vf-empty-listening-core {
+  position: absolute;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 9999px;
+  background-color: var(--room-voices-film-sage);
+}
+
+/* Section II — "Ahhh i am in love again" (lively, playful sunlit reel) */
+.vf-section-playful {
+  position: relative;
+  padding: clamp(0.5rem, 2vw, 1.25rem) 0;
+}
+
+.vf-playful-rule {
+  height: 2px;
+  width: 4.5rem;
+  border-radius: 9999px;
+  background: linear-gradient(
+    90deg,
+    var(--room-voices-film-terracotta) 0%,
+    var(--room-voices-film-ochre) 100%
+  );
+}
+
+.vf-empty-playful {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.75rem;
+  padding: clamp(1.5rem, 4vw, 2.75rem);
+  border-radius: 1.25rem;
+  border: 1px solid rgba(181, 104, 74, 0.22);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 250, 240, 0.88) 0%,
+    rgba(247, 233, 214, 0.65) 100%
+  );
+}
+
+@media (min-width: 44rem) {
+  .vf-empty-playful {
+    flex-direction: row;
+    align-items: center;
+    gap: 2.75rem;
+  }
+}
+
+.vf-empty-playful-frames {
+  position: relative;
+  width: 8.25rem;
+  height: 5.75rem;
+  flex-shrink: 0;
+}
+
+.vf-empty-film-mat {
+  position: absolute;
+  display: block;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(181, 104, 74, 0.34);
+  background-color: rgba(255, 252, 246, 0.86);
+  box-shadow: 0 6px 18px rgba(105, 65, 42, 0.08);
+}
+
+.vf-empty-film-mat-a {
+  left: 0;
+  top: 0.45rem;
+  width: 5.5rem;
+  height: 4.25rem;
+  transform: rotate(-3.5deg);
+}
+
+.vf-empty-film-mat-b {
+  right: 0;
+  bottom: 0.25rem;
+  width: 5.25rem;
+  height: 4rem;
+  border-color: rgba(194, 143, 72, 0.42);
+  transform: rotate(3deg);
+}
+
+/* Section III — "Noice" (standalone unhurried breathing space) */
+.vf-section-noice {
+  border-top: 1px solid var(--room-voices-film-hairline);
+  padding-top: clamp(3.5rem, 8vw, 5.5rem);
+  padding-bottom: clamp(1rem, 3vw, 2rem);
+}
+
+.vf-empty-noice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.vf-empty-noice-frame {
+  width: min(100%, 22rem);
+  aspect-ratio: 16 / 10;
+  border-radius: 0.875rem;
+  border: 1px solid rgba(194, 143, 72, 0.34);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 252, 246, 0.86) 0%,
+    rgba(243, 232, 214, 0.62) 100%
+  );
+  box-shadow:
+    inset 0 0 0 10px rgba(251, 247, 238, 0.55),
+    0 10px 28px rgba(72, 54, 38, 0.05);
+}
+
+/* Playback frames & native media sizing (zero inline styles, preserves exact aspect ratios) */
+.vf-listening-card {
+  border-radius: 1rem;
+  border: 1px solid rgba(103, 128, 105, 0.22);
+  background-color: rgba(255, 252, 246, 0.82);
+  padding: 1rem;
+  box-shadow: 0 8px 24px rgba(58, 45, 34, 0.06);
+}
+
+.vf-listening-stage {
+  overflow: hidden;
+  border-radius: 0.75rem;
+  background-color: #1c1916;
+}
+
+.vf-playful-frame {
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid rgba(181, 104, 74, 0.22);
+  background-color: #1c1916;
+  padding: 0.45rem;
+  box-shadow: 0 14px 36px rgba(74, 49, 34, 0.1);
+}
+
+.vf-standalone-frame {
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid rgba(194, 143, 72, 0.28);
+  background-color: #1a1714;
+  padding: 0.5rem;
+  box-shadow: 0 16px 40px rgba(64, 48, 34, 0.11);
+}
+
+.vf-screen-frame,
+.vf-video-shell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 0.65rem;
+  background-color: #181614;
+}
+
+.vf-video-contain {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-height: 76dvh;
+  object-fit: contain;
+}
+
+/* Static CSS aspect-ratio buckets (no inline style={{ aspectRatio }}) */
+.vf-aspect-portrait-tall {
+  aspect-ratio: 9 / 16;
+  max-height: 76dvh;
+}
+
+.vf-aspect-portrait {
+  aspect-ratio: 3 / 4;
+  max-height: 74dvh;
+}
+
+.vf-aspect-square {
+  aspect-ratio: 1 / 1;
+  max-height: 72dvh;
+}
+
+.vf-aspect-landscape-classic {
+  aspect-ratio: 4 / 3;
+}
+
+.vf-aspect-landscape-wide {
+  aspect-ratio: 16 / 9;
+}
+
+.vf-aspect-natural {
+  min-height: 14rem;
+}
+
+/* Accessible listening controls (>= 44px touch targets) */
+.vf-pill-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  min-width: 4.5rem;
+  padding: 0.45rem 1rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(38, 31, 26, 0.28);
+  background-color: var(--ink-vf-primary);
+  color: #fbf7ee;
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-archive),
+    border-color var(--duration-fast) var(--ease-archive);
+}
+
+.vf-pill-control:hover {
+  background-color: #3a3028;
+}
+
+.vf-pill-control-subtle {
+  background-color: transparent;
+  color: var(--ink-vf-primary);
+}
+
+.vf-pill-control-subtle:hover {
+  background-color: rgba(38, 31, 26, 0.07);
+}
+
+.vf-mode-toggle {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  background-color: transparent;
+  color: var(--ink-vf-secondary);
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-archive),
+    color var(--duration-fast) var(--ease-archive),
+    border-color var(--duration-fast) var(--ease-archive);
+}
+
+.vf-mode-toggle:hover {
+  color: var(--ink-vf-primary);
+}
+
+.vf-mode-toggle-active {
+  border-color: rgba(103, 128, 105, 0.34);
+  background-color: rgba(103, 128, 105, 0.12);
+  color: var(--ink-vf-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:has(.voices-film-stage),
+  body:has(.voices-film-stage) {
+    transition: none;
+  }
+  .voices-film-enter,
+  .voices-film-content-enter {
+    animation: none;
+  }
+  .vf-section-jump,
+  .vf-pill-control,
+  .vf-mode-toggle {
+    transition: none;
+    transform: none;
+  }
+  .vf-section-jump:hover {
+    transform: none;
+  }
+  .vf-empty-film-mat-a,
+  .vf-empty-film-mat-b {
+    transform: none;
   }
 }

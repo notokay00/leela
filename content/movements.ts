@@ -42,9 +42,9 @@ export const ARCHIVE_MOVEMENTS: readonly ArchiveMovementEntry[] = [
     numeral: "III",
     title: "Voices & Film",
     catalogueRef: "AU/III",
-    description: "Recordings and moving images held in the dark.",
+    description: "Voices, laughter, and moving moments kept close.",
     groundToken: "voices-film",
-    implemented: false,
+    implemented: true,
   },
   {
     slug: "cadenza",

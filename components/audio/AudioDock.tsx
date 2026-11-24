@@ -49,7 +49,8 @@ export function AudioDock() {
 
   const isLightRoom =
     pathname.startsWith("/archive/correspondence") ||
-    pathname.startsWith("/dev/correspondence-harness");
+    pathname.startsWith("/dev/correspondence-harness") ||
+    pathname.startsWith("/archive/voices-and-film");
   const isPlaying = state.status === "playing";
   const isWaiting = state.status === "waiting";
   const isUnavailable = !state.available || state.status === "unavailable";

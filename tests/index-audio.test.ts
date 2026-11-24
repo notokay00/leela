@@ -34,7 +34,7 @@ describe("Milestone 2.2 Editorial Index structure and active-room rules", () => 
   });
 
   it("activates navigation links ONLY for implemented rooms and keeps unimplemented rooms inert", () => {
-    // Stillness (AU/I) and Correspondence (AU/II) are implemented; remaining rooms stay inert
+    // Stillness (I), Correspondence (II), and Voices & Film (III) are implemented; Cadenza (IV) stays inert
     assert.equal(ARCHIVE_MOVEMENTS[0].implemented, true);
     assert.equal(getMovementHref(ARCHIVE_MOVEMENTS[0]), "/archive/stillness");
 
@@ -44,7 +44,13 @@ describe("Milestone 2.2 Editorial Index structure and active-room rules", () => 
       "/archive/correspondence"
     );
 
-    for (const movement of ARCHIVE_MOVEMENTS.slice(2)) {
+    assert.equal(ARCHIVE_MOVEMENTS[2].implemented, true);
+    assert.equal(
+      getMovementHref(ARCHIVE_MOVEMENTS[2]),
+      "/archive/voices-and-film"
+    );
+
+    for (const movement of ARCHIVE_MOVEMENTS.slice(3)) {
       assert.equal(movement.implemented, false);
       assert.equal(getMovementHref(movement), null);
     }

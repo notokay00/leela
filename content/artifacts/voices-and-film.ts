@@ -1,31 +1,34 @@
-import type { VideoArtifact, VoiceArtifact } from "@/content/types";
+import type { VoicesAndFilmArtefact } from "@/lib/voices-and-film/types";
 
-export type VoicesAndFilmArtifact = VideoArtifact | VoiceArtifact;
+export type { VoicesAndFilmArtefact as VoicesAndFilmArtifact };
 
 /**
- * Movement III — Voices & Film artifact metadata.
+ * Movement III — Voices & Film authoritative production manifest.
  *
- * CONSENT DEFAULT:
- * All personal material defaults strictly to:
+ * CONSENT & PUBLICATION DEFAULT:
+ * Every personal recording defaults strictly to:
  *   publishStatus: "withheld"
  *   consentConfirmed: false
  *
- * Withheld assets are excluded from the media allowlist and cannot be served
- * until individually reviewed and explicitly approved.
+ * Withheld recordings are excluded from both the media allowlist
+ * (`lib/media/registry.ts`) and the Voices & Film room projection until
+ * individually reviewed, stored outside the public repository, and explicitly
+ * approved. Do not populate with synthetic, stock, or fabricated recordings.
  */
-export const VOICES_AND_FILM_ARTIFACTS: readonly VoicesAndFilmArtifact[] = [
+export const VOICES_AND_FILM_ARTIFACTS: readonly VoicesAndFilmArtefact[] = [
   {
+    id: "arc-iii-01",
     slug: "leela-poem-film",
     catalogId: "ARC-III-01",
     movement: "voices-and-film",
-    kind: "video",
-    title: "For You (Film)",
+    section: "ahhh-i-am-in-love-again",
+    sectionOrder: 1,
+    mediaType: "personal-video",
+    mimeType: "video/mp4",
     // Opaque asset identifier — physical storage path is resolved server-side only.
     assetKey: "arc-iii-01-film",
     pairedArtifactSlug: "for-you-poem",
     publishStatus: "withheld",
     consentConfirmed: false,
-    curatorialNote:
-      "Preserved as a distinct archival film artifact. Withheld pending explicit review.",
   },
 ];
