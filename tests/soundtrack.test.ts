@@ -65,8 +65,8 @@ const EXPECTED_23_ASSIGNMENTS: readonly {
     poemId: "correspondence-002",
     poemSlug: "poem-002",
     poemTitle: "यादों का मौसम",
-    title: "Main Teri Yaad Ko",
-    artist: "Mehdi Hassan",
+    title: "Na Jee Bharke Dekha",
+    artist: "Chandan Dass",
   },
   {
     catalogNumber: "AU/II-003",
@@ -97,8 +97,8 @@ const EXPECTED_23_ASSIGNMENTS: readonly {
     poemId: "correspondence-006",
     poemSlug: "poem-006",
     poemTitle: "मसला",
-    title: "The greatest",
-    artist: "Lana Del Rey",
+    title: "Zindagi Jab Bhi",
+    artist: "Khayyam, Talat Aziz",
   },
   {
     catalogNumber: "AU/II-007",
@@ -145,8 +145,8 @@ const EXPECTED_23_ASSIGNMENTS: readonly {
     poemId: "correspondence-012",
     poemSlug: "poem-012",
     poemTitle: "मेरा आख़िरी दीन",
-    title: "Into Dust",
-    artist: "Mazzy Star",
+    title: "Heaven Can Wait",
+    artist: "Michael Jackson",
   },
   {
     catalogNumber: "AU/II-013",
@@ -475,8 +475,8 @@ describe("Phase 4.1 — Route-to-soundtrack playback, Option A fallback & naviga
       `/archive/correspondence/${firstNav.next.slug}`,
       catalog
     );
-    assert.equal(swipedTarget.track.title, "Main Teri Yaad Ko");
-    assert.equal(swipedTarget.track.artist, "Mehdi Hassan");
+    assert.equal(swipedTarget.track.title, "Na Jee Bharke Dekha");
+    assert.equal(swipedTarget.track.artist, "Chandan Dass");
   });
 
   it("enforces Option A fallback to Rodrigo when a poem soundtrack is missing and never retains previous poem audio", () => {
