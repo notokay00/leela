@@ -227,17 +227,17 @@ describe("The Living Light Table 2.5D physics, bounds, and viewer swipe gestures
   });
 
   it("computes bounded flashlight coordinates and image-scaled radii within target bounds", () => {
-    // Desktop landscape, square, and panoramic prints stay within ~120-170px
+    // Desktop landscape and panoramic prints scale smoothly into the 150-190px beam range
     const landscapeRadius = computeFlashlightRadius(320, 214);
-    assert.ok(landscapeRadius >= 120 && landscapeRadius <= 170);
-
-    const squareRadius = computeFlashlightRadius(215, 215);
-    assert.ok(squareRadius >= 120 && squareRadius <= 170);
+    assert.ok(landscapeRadius >= 150 && landscapeRadius <= MAX_FLASHLIGHT_RADIUS_PX);
 
     const panoramicRadius = computeFlashlightRadius(540, 202);
-    assert.ok(panoramicRadius >= 120 && panoramicRadius <= MAX_FLASHLIGHT_RADIUS_PX);
+    assert.ok(panoramicRadius >= 150 && panoramicRadius <= MAX_FLASHLIGHT_RADIUS_PX);
 
-    // Narrow portrait scales down sensibly without flooding the entire print
+    // Compact square & narrow portrait prints scale down sensibly so the beam stays localized
+    const squareRadius = computeFlashlightRadius(215, 215);
+    assert.ok(squareRadius >= 130 && squareRadius <= 165);
+
     const narrowPortraitRadius = computeFlashlightRadius(140, 210);
     assert.ok(
       narrowPortraitRadius >= MIN_FLASHLIGHT_RADIUS_PX &&

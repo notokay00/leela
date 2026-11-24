@@ -329,11 +329,11 @@
 /*
  * Dual-layer flashlight compositing:
  * 1. Base layer: original coloured photograph held deep in darkroom shadow
- *    (0.34 brightness) so colour and form remain faintly recognisable without
- *    desaturating into a grey box.
- * 2. Illuminated layer: exact same original image at natural brightness (1.03),
- *    revealed strictly through a feathered radial CSS mask centred on the
- *    pointer and clipped inside .light-table-print-frame.
+ *    (0.23 brightness) so photographs almost recede into darkness while keeping
+ *    faint colour and recognisable form (never desaturated into flat grey).
+ * 2. Illuminated layer: exact same original image at heightened natural clarity
+ *    (1.13 brightness, 1.04 contrast), revealed strictly through a strongly
+ *    centred, softly feathered radial CSS mask clipped inside .light-table-print-frame.
  */
 .light-table-print-base {
   display: block;
@@ -342,7 +342,7 @@
   object-fit: contain;
   user-select: none;
   pointer-events: none;
-  filter: brightness(0.34);
+  filter: brightness(0.23);
 }
 
 .light-table-print-lit {
@@ -354,22 +354,24 @@
   object-fit: contain;
   user-select: none;
   pointer-events: none;
-  filter: brightness(1.03);
+  filter: brightness(1.13) contrast(1.04);
   opacity: var(--spot-opacity, 0);
   -webkit-mask-image: radial-gradient(
-    circle var(--spot-radius, 148px) at var(--spot-x, 50%) var(--spot-y, 50%),
+    circle var(--spot-radius, 168px) at var(--spot-x, 50%) var(--spot-y, 50%),
     rgba(0, 0, 0, 1) 0%,
-    rgba(0, 0, 0, 0.94) 24%,
-    rgba(0, 0, 0, 0.62) 50%,
-    rgba(0, 0, 0, 0.2) 76%,
+    rgba(0, 0, 0, 1) 28%,
+    rgba(0, 0, 0, 0.88) 46%,
+    rgba(0, 0, 0, 0.48) 68%,
+    rgba(0, 0, 0, 0.14) 86%,
     rgba(0, 0, 0, 0) 100%
   );
   mask-image: radial-gradient(
-    circle var(--spot-radius, 148px) at var(--spot-x, 50%) var(--spot-y, 50%),
+    circle var(--spot-radius, 168px) at var(--spot-x, 50%) var(--spot-y, 50%),
     rgba(0, 0, 0, 1) 0%,
-    rgba(0, 0, 0, 0.94) 24%,
-    rgba(0, 0, 0, 0.62) 50%,
-    rgba(0, 0, 0, 0.2) 76%,
+    rgba(0, 0, 0, 1) 28%,
+    rgba(0, 0, 0, 0.88) 46%,
+    rgba(0, 0, 0, 0.48) 68%,
+    rgba(0, 0, 0, 0.14) 86%,
     rgba(0, 0, 0, 0) 100%
   );
   -webkit-mask-repeat: no-repeat;
@@ -407,23 +409,25 @@
   -webkit-mask-image: radial-gradient(
     circle farthest-side at 50% 50%,
     rgba(0, 0, 0, 1) 0%,
-    rgba(0, 0, 0, 0.92) 46%,
-    rgba(0, 0, 0, 0.56) 76%,
-    rgba(0, 0, 0, 0.28) 100%
+    rgba(0, 0, 0, 1) 36%,
+    rgba(0, 0, 0, 0.86) 58%,
+    rgba(0, 0, 0, 0.44) 82%,
+    rgba(0, 0, 0, 0.2) 100%
   );
   mask-image: radial-gradient(
     circle farthest-side at 50% 50%,
     rgba(0, 0, 0, 1) 0%,
-    rgba(0, 0, 0, 0.92) 46%,
-    rgba(0, 0, 0, 0.56) 76%,
-    rgba(0, 0, 0, 0.28) 100%
+    rgba(0, 0, 0, 1) 36%,
+    rgba(0, 0, 0, 0.86) 58%,
+    rgba(0, 0, 0, 0.44) 82%,
+    rgba(0, 0, 0, 0.2) 100%
   );
 }
 
-/* Subtle touch feedback & restrained dim legibility on coarse pointer without simulating hover */
+/* Subtle touch feedback & restrained dark legibility on coarse pointer without simulating hover */
 @media (pointer: coarse) {
   .light-table-print-base {
-    filter: brightness(0.38);
+    filter: brightness(0.26);
   }
 
   .light-table-print:active {
