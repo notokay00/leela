@@ -245,7 +245,9 @@ function buildTestCatalog(options: {
   return {
     archiveTrack: toClientSoundtrackTrack(ARCHIVE_DEFAULT_SOUNDTRACK, {
       available: options.archiveAvailable,
-      mimeType: options.archiveAvailable ? "audio/mpeg" : null,
+      mimeType: options.archiveAvailable
+        ? ARCHIVE_DEFAULT_SOUNDTRACK.mimeType
+        : null,
     }),
     poemTracks: POEM_SOUNDTRACK_MANIFEST.map((record) => {
       const available = Boolean(
@@ -253,14 +255,14 @@ function buildTestCatalog(options: {
       );
       return toClientSoundtrackTrack(record, {
         available,
-        mimeType: available ? "audio/mpeg" : null,
+        mimeType: available ? record.mimeType : null,
       });
     }),
   };
 }
 
 describe("Phase 4.1 — Track mapping, exact 23-poem assignments & SHA-256 preservation", () => {
-  it("configures Joaquín Rodrigo (Grimethorpe performance) as the archive-wide default without fabricating audio assets", () => {
+  it("configures Joaquín Rodrigo (Grimethorpe performance) as the archive-wide default with verified format metadata while keeping hosting unapproved", () => {
     assert.equal(ARCHIVE_DEFAULT_SOUNDTRACK.scope, "archive");
     assert.equal(
       ARCHIVE_DEFAULT_SOUNDTRACK.title,
@@ -270,11 +272,11 @@ describe("Phase 4.1 — Track mapping, exact 23-poem assignments & SHA-256 prese
     assert.match(ARCHIVE_DEFAULT_SOUNDTRACK.performance ?? "", /Grimethorpe/);
     assert.equal(ARCHIVE_DEFAULT_SOUNDTRACK.rightsApproval, "unverified");
     assert.equal(ARCHIVE_DEFAULT_SOUNDTRACK.hostingApproved, false);
-    assert.equal(ARCHIVE_DEFAULT_SOUNDTRACK.mimeType, null);
-    assert.equal(ARCHIVE_DEFAULT_SOUNDTRACK.audioFormat, null);
+    assert.equal(ARCHIVE_DEFAULT_SOUNDTRACK.mimeType, "audio/mpeg");
+    assert.equal(ARCHIVE_DEFAULT_SOUNDTRACK.audioFormat, "mp3");
   });
 
-  it("maps all 23 poem IDs exactly once to 23 unique soundtrack IDs with verbatim titles, ellipses, and artists", () => {
+  it("maps all 23 poem IDs exactly once to 23 unique soundtrack IDs with verbatim titles, ellipses, artists, and verified formats", () => {
     assert.equal(POEM_SOUNDTRACK_MANIFEST.length, 23);
     assert.equal(ALL_SOUNDTRACK_RECORDS.length, 24);
 
@@ -296,8 +298,13 @@ describe("Phase 4.1 — Track mapping, exact 23-poem assignments & SHA-256 prese
       assert.equal(isValidOpaqueAssetId(record.assetKey), true);
       assert.equal(record.rightsApproval, "unverified");
       assert.equal(record.hostingApproved, false);
-      assert.equal(record.mimeType, null);
-      assert.equal(record.audioFormat, null);
+      if (record.id === "snd-poem-022") {
+        assert.equal(record.mimeType, "audio/mp4");
+        assert.equal(record.audioFormat, "m4a");
+      } else {
+        assert.equal(record.mimeType, "audio/mpeg");
+        assert.equal(record.audioFormat, "mp3");
+      }
     }
 
     for (let i = 0; i < EXPECTED_23_ASSIGNMENTS.length; i++) {
