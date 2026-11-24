@@ -18,6 +18,10 @@ import {
   toCatalogueEntry,
   validateCollectionIntegrity,
 } from "../lib/correspondence/collection.ts";
+import {
+  detectCorrespondenceSwipe,
+  shouldCancelSwipeForVerticalScroll,
+} from "../lib/correspondence/swipe.ts";
 import { SYNTHETIC_CORRESPONDENCE_FIXTURES } from "../lib/correspondence/synthetic-fixtures.ts";
 import type { CorrespondenceArtefact } from "../lib/correspondence/types.ts";
 
@@ -389,7 +393,7 @@ describe("Correspondence first-edition 23-poem collection integrity & SHA-256 ve
       null
     );
 
-    // Verify Correspondence UI components never render "Untitled" placeholder headings
+    // Verify Correspondence UI components omit visible catalogue taxonomy & placeholder labels
     const catalogueSource = readFileSync(
       "components/correspondence/CorrespondenceCatalogue.tsx",
       "utf8"
@@ -400,6 +404,11 @@ describe("Correspondence first-edition 23-poem collection integrity & SHA-256 ve
     );
     assert.equal(catalogueSource.includes("Untitled"), false);
     assert.equal(readerSource.includes("Untitled"), false);
+    assert.equal(catalogueSource.includes("catalogNumber"), false);
+    assert.equal(readerSource.includes("catalogNumber"), false);
+    assert.equal(catalogueSource.includes("II · AU/II"), false);
+    assert.equal(readerSource.includes("formatLanguageMetadata"), false);
+    assert.equal(readerSource.includes("formatArtefactTypeLabel"), false);
   });
 
   it("strictly isolates synthetic fixtures from production routes and never includes the private poem", () => {
@@ -580,7 +589,114 @@ describe("Correspondence withheld filtering, typography, and Previous/Next navig
     assert.equal(formatLanguageMetadata("ur", "Nastaliq"), "Urdu · Nastaliq");
   });
 
-  it("defines warm literary paper tokens, Devanagari shaping rules, 1.5s transition, and reduced-motion in globals.css", () => {
+  it("detects deliberate mobile horizontal swipes without wrapping or interfering with vertical scroll", () => {
+    // Swipe left -> next when available; never wraps at end
+    assert.equal(
+      detectCorrespondenceSwipe({
+        startX: 280,
+        startY: 300,
+        endX: 170,
+        endY: 312,
+        durationMs: 220,
+        hasPrevious: true,
+        hasNext: true,
+      }),
+      "next"
+    );
+    assert.equal(
+      detectCorrespondenceSwipe({
+        startX: 280,
+        startY: 300,
+        endX: 170,
+        endY: 312,
+        durationMs: 220,
+        hasPrevious: true,
+        hasNext: false,
+      }),
+      "none"
+    );
+
+    // Swipe right -> prev when available; never wraps at beginning
+    assert.equal(
+      detectCorrespondenceSwipe({
+        startX: 90,
+        startY: 320,
+        endX: 205,
+        endY: 310,
+        durationMs: 240,
+        hasPrevious: true,
+        hasNext: true,
+      }),
+      "prev"
+    );
+    assert.equal(
+      detectCorrespondenceSwipe({
+        startX: 90,
+        startY: 320,
+        endX: 205,
+        endY: 310,
+        durationMs: 240,
+        hasPrevious: false,
+        hasNext: true,
+      }),
+      "none"
+    );
+
+    // Vertical scroll, diagonal drag, below-threshold nudge, and slow selection drag are ignored
+    assert.equal(shouldCancelSwipeForVerticalScroll(12, -36), true);
+    assert.equal(shouldCancelSwipeForVerticalScroll(48, 12), false);
+    assert.equal(
+      detectCorrespondenceSwipe({
+        startX: 200,
+        startY: 400,
+        endX: 110,
+        endY: 280,
+        durationMs: 200,
+        hasPrevious: true,
+        hasNext: true,
+      }),
+      "none"
+    );
+    assert.equal(
+      detectCorrespondenceSwipe({
+        startX: 200,
+        startY: 300,
+        endX: 155,
+        endY: 302,
+        durationMs: 180,
+        hasPrevious: true,
+        hasNext: true,
+      }),
+      "none"
+    );
+    assert.equal(
+      detectCorrespondenceSwipe({
+        startX: 280,
+        startY: 300,
+        endX: 150,
+        endY: 305,
+        durationMs: 950,
+        hasPrevious: true,
+        hasNext: true,
+      }),
+      "none"
+    );
+    assert.equal(
+      detectCorrespondenceSwipe({
+        startX: 280,
+        startY: 300,
+        endX: 150,
+        endY: 305,
+        durationMs: 210,
+        hasPrevious: true,
+        hasNext: true,
+        cancelledByVertical: true,
+      }),
+      "none"
+    );
+  });
+
+  it("defines warm literary paper tokens, Devanagari shaping rules, smooth transition, and reduced-motion in globals.css", () => {
     const css = readFileSync("app/globals.css", "utf8");
     assert.ok(css.includes("--room-correspondence: #ede6d9;"));
     assert.ok(css.includes("--room-correspondence-surface: #e5dccb;"));
@@ -588,7 +704,8 @@ describe("Correspondence withheld filtering, typography, and Previous/Next navig
     assert.ok(css.includes("--ink-paper-primary: #29251f;"));
     assert.ok(css.includes("--hairline-paper: #cec4b4;"));
     assert.ok(css.includes(".correspondence-ground-enter"));
-    assert.ok(css.includes("1500ms"));
+    assert.ok(css.includes("correspondenceLightBloom"));
+    assert.ok(css.includes("1350ms"));
     assert.ok(css.includes(".correspondence-verse-devanagari"));
     assert.ok(css.includes("letter-spacing: 0;"));
     assert.ok(css.includes("white-space: pre-wrap;"));

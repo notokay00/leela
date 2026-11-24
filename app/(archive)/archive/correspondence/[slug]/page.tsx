@@ -37,8 +37,8 @@ export async function generateMetadata({
 
   return {
     title: artefact.title
-      ? `${artefact.title} (${artefact.catalogNumber}) — Correspondence`
-      : `${artefact.catalogNumber} — Correspondence`,
+      ? `${artefact.title} — Correspondence`
+      : "Correspondence — The Archive of Us",
   };
 }
 
@@ -67,7 +67,6 @@ export default async function CorrespondenceArtefactPage({
   return (
     <main>
       <RoomTopBar
-        catalogueRef={artefact.catalogNumber}
         tone="light"
         rightSlot={<LockArchiveButton tone="light" />}
       />

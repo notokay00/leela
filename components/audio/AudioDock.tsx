@@ -67,7 +67,7 @@ export function AudioDock() {
     >
       <div
         className={cn(
-          "flex items-center gap-3 border px-3.5 py-2 backdrop-blur-sm transition-colors duration-700",
+          "flex items-center gap-3 border px-3.5 py-2 backdrop-blur-sm transition-colors duration-1000 ease-in-out",
           isLightRoom
             ? "border-paper-hairline bg-paper-elevated/92 text-paper-ink"
             : "border-hairline bg-void/90 text-ink"

@@ -516,26 +516,31 @@
    ========================================================================== */
 
 /*
- * Gradual 1.5s ground transition from dark studio rooms (Void / Stillness)
- * into warm natural paper light — zero page-turn or curtain gimmicks.
+ * Coherent passage from dark photographic rooms (#08090B / #070709) into warm
+ * archival paper (#EDE6D9). Perceptually stepped through warm umber and dusk
+ * tones so the darkness gently yields to paper light without an abrupt flash.
  */
 @keyframes correspondenceGroundEmerge {
   0% {
     background-color: #0b0c0e;
   }
-  26% {
-    background-color: #1f1c18;
+  22% {
+    background-color: #211d18;
+  }
+  48% {
+    background-color: #5b5145;
+  }
+  74% {
+    background-color: #b8ac9b;
   }
   100% {
     background-color: var(--room-correspondence);
   }
 }
 
-@keyframes correspondenceContentSettle {
-  0% {
-    opacity: 0;
-  }
-  30% {
+@keyframes correspondenceLightBloom {
+  0%,
+  34% {
     opacity: 0;
   }
   100% {
@@ -543,15 +548,28 @@
   }
 }
 
+@keyframes correspondenceContentSettle {
+  0%,
+  26% {
+    opacity: 0;
+    transform: translate3d(0, 4px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
 /*
  * Match root canvas & scrollbar colour-scheme to the warm paper ground while
- * inside Correspondence so rubber-band overscroll and bottom boundaries never
- * reveal the dark void behind the paper.
+ * inside Correspondence with a smooth background transition so overscroll and
+ * room entry never flash harshly between near-black and bright ivory.
  */
 html:has(.correspondence-stage),
 body:has(.correspondence-stage) {
   color-scheme: light;
   background-color: var(--room-correspondence);
+  transition: background-color 1150ms cubic-bezier(0.45, 0, 0.25, 1);
 }
 
 .correspondence-stage {
@@ -559,21 +577,38 @@ body:has(.correspondence-stage) {
   min-height: 100dvh;
   color-scheme: light;
   background-color: var(--room-correspondence);
-  background-image: radial-gradient(
-    ellipse 115% 70% at 50% 0%,
-    rgba(255, 252, 246, 0.42) 0%,
-    rgba(237, 230, 217, 0) 68%
-  );
   color: var(--ink-paper-primary);
   padding-bottom: max(6.5rem, calc(env(safe-area-inset-bottom) + 5.5rem));
 }
 
+/* Soft overhead paper light — blooms gently after the ground warms */
+.correspondence-stage::before {
+  content: "";
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-image: radial-gradient(
+    ellipse 115% 70% at 50% 0%,
+    rgba(255, 252, 246, 0.44) 0%,
+    rgba(237, 230, 217, 0) 68%
+  );
+}
+
 .correspondence-ground-enter {
-  animation: correspondenceGroundEmerge 1500ms var(--ease-archive) both;
+  animation: correspondenceGroundEmerge 1350ms cubic-bezier(0.45, 0, 0.25, 1)
+    both;
+}
+
+.correspondence-ground-enter::before {
+  animation: correspondenceLightBloom 1350ms cubic-bezier(0.45, 0, 0.25, 1) both;
 }
 
 .correspondence-content-enter {
-  animation: correspondenceContentSettle 1500ms var(--ease-archive) both;
+  position: relative;
+  z-index: 1;
+  animation: correspondenceContentSettle 1350ms cubic-bezier(0.45, 0, 0.25, 1)
+    both;
 }
 
 .correspondence-stage ::selection {
@@ -631,7 +666,12 @@ body:has(.correspondence-stage) {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html:has(.correspondence-stage),
+  body:has(.correspondence-stage) {
+    transition: none;
+  }
   .correspondence-ground-enter,
+  .correspondence-ground-enter::before,
   .correspondence-content-enter {
     animation: none;
   }

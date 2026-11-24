@@ -30,7 +30,6 @@ export default async function CorrespondencePage() {
   return (
     <main>
       <RoomTopBar
-        catalogueRef="AU/II"
         tone="light"
         rightSlot={<LockArchiveButton tone="light" />}
       />

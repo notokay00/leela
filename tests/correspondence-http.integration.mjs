@@ -138,71 +138,68 @@ async function run() {
 
     const roomHtml = await roomRes.text();
     assert.ok(roomHtml.includes("Correspondence"));
-    assert.ok(roomHtml.includes("23 literary artefacts"));
-    assert.ok(roomHtml.includes("AU/II-001"));
-    assert.ok(roomHtml.includes("AU/II-023"));
     assert.ok(roomHtml.includes("For You"));
     assert.ok(roomHtml.includes("यादों का मौसम"));
     assert.ok(roomHtml.includes("एहतिसाब"));
     assert.ok(roomHtml.includes("Saudade"));
     assert.ok(roomHtml.includes("Izel"));
-    // Catalogue must not leak full poem bodies or synthetic dev fixtures
+    assert.ok(roomHtml.includes('href="/archive/correspondence/for-you-poem"'));
+    assert.ok(roomHtml.includes('href="/archive/correspondence/poem-023"'));
+    // Catalogue omits technical AU/II taxonomy, script descriptors, full bodies, and synthetic fixtures
+    assert.ok(!roomHtml.includes("AU/II-001"));
+    assert.ok(!roomHtml.includes("II · AU/II"));
+    assert.ok(!roomHtml.includes("Devanagari"));
     assert.ok(!roomHtml.includes("तेरी आखों में जो देखा"));
     assert.ok(!roomHtml.includes("TEST/II-001"));
     assert.ok(!roomHtml.includes("TEST FIXTURES"));
 
-    // 6. Authenticated individual reader routes render exact poems & Previous/Next chain across all 23 entries
+    // 6. Authenticated individual reader routes render pure title/text/nav without catalogue metadata stack
     const readerChecks = [
       {
         slug: "for-you-poem",
         mustInclude: [
-          "AU/II-001",
           "For You",
           "तेरी आखों में जो देखा, वहाँ ठहरा है वक़्त,",
-          "1 / 23",
           'href="/archive/correspondence/poem-002"',
         ],
+        mustExclude: ["AU/II-001", "AU/II-002", "II · AU/II", "Hindi · Devanagari"],
       },
       {
         slug: "poem-004",
         mustInclude: [
-          "AU/II-004",
           "एहतिसाब",
           "ख़ता तो मिट्टी की फ़ितरत है, फ़रिश्ता कौन है यहाँ, मानकर सुधर जाना ही असली सवाब है।",
-          "4 / 23",
           'href="/archive/correspondence/poem-003"',
           'href="/archive/correspondence/poem-005"',
         ],
+        mustExclude: ["AU/II-004", "AU/II-003", "AU/II-005", "Hindi · Devanagari"],
       },
       {
         slug: "poem-010",
         mustInclude: [
-          "AU/II-010",
           "रौशनी की दहलीज़",
-          "10 / 23",
           'href="/archive/correspondence/poem-009"',
           'href="/archive/correspondence/poem-011"',
         ],
+        mustExclude: ["AU/II-010", "Hindi · Devanagari"],
       },
       {
         slug: "poem-022",
         mustInclude: [
-          "AU/II-022",
           "Saudade",
-          "22 / 23",
           'href="/archive/correspondence/poem-021"',
           'href="/archive/correspondence/poem-023"',
         ],
+        mustExclude: ["AU/II-022", "AU/II-021", "AU/II-023"],
       },
       {
         slug: "poem-023",
         mustInclude: [
-          "AU/II-023",
           "Izel",
-          "23 / 23",
           'href="/archive/correspondence/poem-022"',
           "End of collection",
         ],
+        mustExclude: ["AU/II-023", "AU/II-022"],
       },
     ];
 
@@ -222,6 +219,12 @@ async function run() {
         assert.ok(
           normalizedHtml.includes(token),
           `Reader route ${check.slug} missing expected content: ${token}`
+        );
+      }
+      for (const forbidden of check.mustExclude) {
+        assert.ok(
+          !normalizedHtml.includes(forbidden),
+          `Reader route ${check.slug} should omit visible metadata token: ${forbidden}`
         );
       }
     }

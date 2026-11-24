@@ -25,7 +25,7 @@ export default function CorrespondenceDevHarnessPage() {
 
   return (
     <main>
-      <RoomTopBar catalogueRef="TEST" tone="light" />
+      <RoomTopBar tone="light" />
       <div className="pt-6 sm:pt-10">
         <CorrespondenceCatalogue
           entries={entries}

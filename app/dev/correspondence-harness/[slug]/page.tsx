@@ -40,7 +40,7 @@ export default async function CorrespondenceDevHarnessReaderPage({
 
   return (
     <main>
-      <RoomTopBar catalogueRef={artefact.catalogNumber} tone="light" />
+      <RoomTopBar tone="light" />
       <div className="pt-6 sm:pt-10">
         <CorrespondenceReader
           artefact={artefact}
