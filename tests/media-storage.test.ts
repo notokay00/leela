@@ -28,12 +28,15 @@ import {
 import { VercelPrivateBlobStorageAdapter } from "../lib/storage/vercel-blob.ts";
 
 describe("Consent defaults and strict opaque media allowlist", () => {
-  it("keeps all personal artifacts withheld and unconsented by default", () => {
+  it("keeps all unapproved personal media artifacts withheld while respecting approved Correspondence text publication", () => {
+    // All 23 first-edition Correspondence poems are explicitly approved by the author
+    assert.equal(CORRESPONDENCE_ARTIFACTS.length, 23);
     for (const artifact of CORRESPONDENCE_ARTIFACTS) {
-      assert.equal(artifact.publishStatus, "withheld");
-      assert.equal(artifact.consentConfirmed, false);
+      assert.equal(artifact.publishStatus, "ready");
+      assert.equal(artifact.consentConfirmed, true);
     }
 
+    // All personal media (video/audio) remain strictly withheld and unconsented
     for (const artifact of VOICES_AND_FILM_ARTIFACTS) {
       assert.equal(artifact.publishStatus, "withheld");
       assert.equal(artifact.consentConfirmed, false);

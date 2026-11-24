@@ -126,7 +126,7 @@ async function run() {
     assert.ok(!indexHtml.includes('href="/archive/voices-and-film"'));
     assert.ok(!indexHtml.includes('href="/archive/cadenza"'));
 
-    // 5. Authenticated Correspondence room renders warm literary empty state & strict CSP, ZERO withheld leaks
+    // 5. Authenticated Correspondence catalogue renders all 23 approved poems, strict CSP, ZERO synthetic leaks
     const roomRes = await fetch(`${ORIGIN}/archive/correspondence`, {
       headers: { cookie: cookieHeader },
     });
@@ -138,40 +138,104 @@ async function run() {
 
     const roomHtml = await roomRes.text();
     assert.ok(roomHtml.includes("Correspondence"));
-    assert.ok(
-      roomHtml.includes("No literary artefacts are available here yet.")
-    );
-    assert.ok(!roomHtml.includes("तेरी आखों"));
-    assert.ok(!roomHtml.includes("for-you-poem"));
+    assert.ok(roomHtml.includes("23 literary artefacts"));
+    assert.ok(roomHtml.includes("AU/II-001"));
+    assert.ok(roomHtml.includes("AU/II-023"));
+    assert.ok(roomHtml.includes("For You"));
+    assert.ok(roomHtml.includes("यादों का मौसम"));
+    assert.ok(roomHtml.includes("एहतिसाब"));
+    assert.ok(roomHtml.includes("Saudade"));
+    assert.ok(roomHtml.includes("Izel"));
+    // Catalogue must not leak full poem bodies or synthetic dev fixtures
+    assert.ok(!roomHtml.includes("तेरी आखों में जो देखा"));
     assert.ok(!roomHtml.includes("TEST/II-001"));
     assert.ok(!roomHtml.includes("TEST FIXTURES"));
 
-    // 6. Authenticated direct requests to withheld imported poems return 404 and leak ZERO title/text/catalogId
-    const withheldChecks = [
-      { slug: "for-you-poem", forbid: ["तेरी आखों", "For You", "AU/II-001"] },
-      { slug: "poem-002", forbid: ["यादों का मौसम", "AU/II-002"] },
-      { slug: "poem-004", forbid: ["एहतिसाब", "AU/II-004"] },
-      { slug: "poem-022", forbid: ["Saudade", "AU/II-022"] },
-      { slug: "poem-023", forbid: ["Izel", "AU/II-023"] },
+    // 6. Authenticated individual reader routes render exact poems & Previous/Next chain across all 23 entries
+    const readerChecks = [
+      {
+        slug: "for-you-poem",
+        mustInclude: [
+          "AU/II-001",
+          "For You",
+          "तेरी आखों में जो देखा, वहाँ ठहरा है वक़्त,",
+          "1 / 23",
+          'href="/archive/correspondence/poem-002"',
+        ],
+      },
+      {
+        slug: "poem-004",
+        mustInclude: [
+          "AU/II-004",
+          "एहतिसाब",
+          "ख़ता तो मिट्टी की फ़ितरत है, फ़रिश्ता कौन है यहाँ, मानकर सुधर जाना ही असली सवाब है।",
+          "4 / 23",
+          'href="/archive/correspondence/poem-003"',
+          'href="/archive/correspondence/poem-005"',
+        ],
+      },
+      {
+        slug: "poem-010",
+        mustInclude: [
+          "AU/II-010",
+          "रौशनी की दहलीज़",
+          "10 / 23",
+          'href="/archive/correspondence/poem-009"',
+          'href="/archive/correspondence/poem-011"',
+        ],
+      },
+      {
+        slug: "poem-022",
+        mustInclude: [
+          "AU/II-022",
+          "Saudade",
+          "22 / 23",
+          'href="/archive/correspondence/poem-021"',
+          'href="/archive/correspondence/poem-023"',
+        ],
+      },
+      {
+        slug: "poem-023",
+        mustInclude: [
+          "AU/II-023",
+          "Izel",
+          "23 / 23",
+          'href="/archive/correspondence/poem-022"',
+          "End of collection",
+        ],
+      },
     ];
 
-    for (const check of withheldChecks) {
-      const withheldReaderRes = await fetch(
+    for (const check of readerChecks) {
+      const readerRes = await fetch(
         `${ORIGIN}/archive/correspondence/${check.slug}`,
         { headers: { cookie: cookieHeader } }
       );
       assert.equal(
-        withheldReaderRes.status,
-        404,
-        `Withheld slug ${check.slug} must return 404`
+        readerRes.status,
+        200,
+        `Approved reader route ${check.slug} must return 200`
       );
-      const withheldHtml = await withheldReaderRes.text();
-      for (const token of check.forbid) {
+      const readerHtml = await readerRes.text();
+      const normalizedHtml = readerHtml.replace(/<!--[\s\S]*?-->/g, "");
+      for (const token of check.mustInclude) {
         assert.ok(
-          !withheldHtml.includes(token),
-          `Withheld route ${check.slug} leaked token: ${token}`
+          normalizedHtml.includes(token),
+          `Reader route ${check.slug} missing expected content: ${token}`
         );
       }
+    }
+
+    // Also verify all 23 slugs return HTTP 200 when authenticated
+    const allSlugs = [
+      "for-you-poem",
+      ...Array.from({ length: 22 }, (_, i) => `poem-${String(i + 2).padStart(3, "0")}`),
+    ];
+    for (const slug of allSlugs) {
+      const res = await fetch(`${ORIGIN}/archive/correspondence/${slug}`, {
+        headers: { cookie: cookieHeader },
+      });
+      assert.equal(res.status, 200, `Expected 200 for ${slug}`);
     }
 
     // 7. Authenticated request to synthetic fixture slug on production route returns 404

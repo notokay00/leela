@@ -303,10 +303,10 @@ describe("Correspondence first-edition 23-poem collection integrity & SHA-256 ve
         `UTF-8 SHA-256 mismatch on ${expected.catalogNumber}`
       );
 
-      // Application-level consent flags preserved as supplied
-      assert.equal(actual.publishStatus, "withheld");
-      assert.equal(actual.consentConfirmed, false);
-      assert.equal(isArtefactApproved(actual), false);
+      // All 23 first-edition artefacts are explicitly approved by the author
+      assert.equal(actual.publishStatus, "ready");
+      assert.equal(actual.consentConfirmed, true);
+      assert.equal(isArtefactApproved(actual), true);
     }
   });
 
@@ -331,21 +331,15 @@ describe("Correspondence first-edition 23-poem collection integrity & SHA-256 ve
     );
   });
 
-  it("resolves all 23 routes, typography classes, and full Previous/Next chain when permitted by policy", () => {
-    const permittedCopy: CorrespondenceArtefact[] = CORRESPONDENCE_ARTIFACTS.map(
-      (item) => ({
-        ...item,
-        publishStatus: "ready",
-        consentConfirmed: true,
-      })
+  it("resolves all 23 live production routes, typography classes, and full Previous/Next chain", () => {
+    const approved = selectApprovedCorrespondenceArtefacts(
+      CORRESPONDENCE_ARTIFACTS
     );
-
-    const approved = selectApprovedCorrespondenceArtefacts(permittedCopy);
     assert.equal(approved.length, 23);
 
     for (let i = 0; i < approved.length; i++) {
       const entry = approved[i];
-      const resolved = findApprovedArtefactBySlug(approved, entry.slug);
+      const resolved = findApprovedArtefactBySlug(CORRESPONDENCE_ARTIFACTS, entry.slug);
       assert.ok(resolved);
       assert.equal(resolved.originalText, CORRESPONDENCE_ARTIFACTS[i].originalText);
 
@@ -356,7 +350,7 @@ describe("Correspondence first-edition 23-poem collection integrity & SHA-256 ve
           : "correspondence-verse-latin";
       assert.equal(getReadingTextClass(entry.script, entry.language), expectedClass);
 
-      // Previous/Next chain in exact collection order
+      // Previous/Next chain in exact collection order (1 through 23)
       const nav = resolveReaderNavigation(approved, entry.slug);
       assert.equal(nav.position, i + 1);
       assert.equal(nav.total, 23);
@@ -371,18 +365,29 @@ describe("Correspondence first-edition 23-poem collection integrity & SHA-256 ve
     }
   });
 
-  it("keeps production runtime view filtered while all entries remain withheld, and never renders placeholder Untitled labels", () => {
-    const approved = selectApprovedCorrespondenceArtefacts(
-      CORRESPONDENCE_ARTIFACTS
+  it("enforces withheld filtering on withheld records and never renders placeholder Untitled labels", () => {
+    const withWithheldRecord: CorrespondenceArtefact[] = [
+      ...CORRESPONDENCE_ARTIFACTS,
+      {
+        id: "correspondence-999-withheld",
+        slug: "withheld-sentinel-999",
+        catalogNumber: "AU/II-999",
+        collectionOrder: 999,
+        type: "poem",
+        title: "Withheld Sentinel",
+        language: "en",
+        script: "Latin",
+        publishStatus: "withheld",
+        consentConfirmed: false,
+        originalText: "Withheld sentinel text",
+      },
+    ];
+    const approved = selectApprovedCorrespondenceArtefacts(withWithheldRecord);
+    assert.equal(approved.length, 23);
+    assert.equal(
+      findApprovedArtefactBySlug(withWithheldRecord, "withheld-sentinel-999"),
+      null
     );
-    assert.equal(approved.length, 0);
-
-    for (const item of CORRESPONDENCE_ARTIFACTS) {
-      assert.equal(
-        findApprovedArtefactBySlug(CORRESPONDENCE_ARTIFACTS, item.slug),
-        null
-      );
-    }
 
     // Verify Correspondence UI components never render "Untitled" placeholder headings
     const catalogueSource = readFileSync(
