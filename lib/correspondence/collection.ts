@@ -152,9 +152,12 @@ export function formatArtefactTypeLabel(
 
 const KNOWN_LANGUAGE_NAMES: Record<string, string> = {
   hi: "Hindi",
+  hindi: "Hindi",
   en: "English",
+  english: "English",
   "hi-en": "Hindi & English",
   ur: "Urdu",
+  urdu: "Urdu",
 };
 
 export function formatLanguageMetadata(
@@ -166,8 +169,13 @@ export function formatLanguageMetadata(
     return languageLabel.trim();
   }
 
-  const baseName = KNOWN_LANGUAGE_NAMES[language] ?? language.toUpperCase();
-  if (script === "Devanagari" && language === "hi") {
+  const normalizedLang = language.toLowerCase();
+  const baseName =
+    KNOWN_LANGUAGE_NAMES[normalizedLang] ?? language.toUpperCase();
+  if (
+    script === "Devanagari" &&
+    (normalizedLang === "hi" || normalizedLang === "hindi")
+  ) {
     return "Hindi · Devanagari";
   }
   if (script === "Mixed") {
@@ -187,10 +195,15 @@ export function getReadingTextClass(
   script: LiteraryScript,
   language?: LiteraryLanguage
 ): string {
-  if (script === "Devanagari" || language === "hi") {
+  const normalizedLang = language?.toLowerCase();
+  if (
+    script === "Devanagari" ||
+    normalizedLang === "hi" ||
+    normalizedLang === "hindi"
+  ) {
     return "correspondence-verse-devanagari";
   }
-  if (script === "Mixed" || language === "hi-en") {
+  if (script === "Mixed" || normalizedLang === "hi-en") {
     return "correspondence-verse-mixed";
   }
   return "correspondence-verse-latin";

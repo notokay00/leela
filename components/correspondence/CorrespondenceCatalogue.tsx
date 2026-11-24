@@ -87,7 +87,7 @@ export function CorrespondenceCatalogue({
                 entry.script === "Devanagari";
               const accessibleLabel = entry.title
                 ? `${entry.catalogNumber} — ${entry.title} (${typeLabel})`
-                : `${entry.catalogNumber} — Untitled ${typeLabel}`;
+                : `${entry.catalogNumber} (${typeLabel})`;
 
               return (
                 <li
@@ -100,35 +100,42 @@ export function CorrespondenceCatalogue({
                     className="threshold-control group flex flex-col gap-2 px-1 py-5 transition-colors hover:bg-paper-surface/65 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6 sm:px-3 sm:py-6"
                   >
                     <div className="flex min-w-0 flex-1 flex-col gap-1.5 sm:flex-row sm:items-baseline sm:gap-6">
-                      <span className="w-24 shrink-0 font-mono text-[11px] tracking-[0.14em] text-paper-ink-muted">
+                      <span
+                        className={cn(
+                          "shrink-0 font-mono tracking-[0.14em]",
+                          entry.title
+                            ? "w-24 text-[11px] text-paper-ink-muted"
+                            : "text-sm text-paper-ink"
+                        )}
+                      >
                         {entry.catalogNumber}
                       </span>
 
-                      <div className="min-w-0 flex-1">
-                        {entry.title ? (
-                          <span
-                            lang={isDevanagariTitle ? entry.language : undefined}
-                            className={cn(
-                              "block text-paper-ink transition-colors group-hover:text-paper-ink",
-                              isDevanagariTitle
-                                ? "font-devanagari text-xl leading-relaxed tracking-normal"
-                                : "font-serif text-xl leading-snug tracking-[0.01em] sm:text-[1.35rem]"
-                            )}
-                          >
-                            {entry.title}
-                          </span>
-                        ) : (
-                          <span className="block font-serif text-lg leading-snug text-paper-ink-secondary italic sm:text-xl">
-                            Untitled {typeLabel}
-                          </span>
-                        )}
+                      {(entry.title || entry.summary) && (
+                        <div className="min-w-0 flex-1">
+                          {entry.title && (
+                            <span
+                              lang={
+                                isDevanagariTitle ? entry.language : undefined
+                              }
+                              className={cn(
+                                "block text-paper-ink transition-colors group-hover:text-paper-ink",
+                                isDevanagariTitle
+                                  ? "font-devanagari text-xl leading-relaxed tracking-normal"
+                                  : "font-serif text-xl leading-snug tracking-[0.01em] sm:text-[1.35rem]"
+                              )}
+                            >
+                              {entry.title}
+                            </span>
+                          )}
 
-                        {entry.summary && (
-                          <span className="mt-1.5 block font-sans text-sm leading-relaxed text-paper-ink-secondary">
-                            {entry.summary}
-                          </span>
-                        )}
-                      </div>
+                          {entry.summary && (
+                            <span className="mt-1.5 block font-sans text-sm leading-relaxed text-paper-ink-secondary">
+                              {entry.summary}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 font-mono text-[10px] tracking-[0.14em] text-paper-ink-muted uppercase sm:shrink-0 sm:justify-end">

@@ -63,6 +63,8 @@ export interface LiteraryArtefactBase {
   summary?: string;
   /** Immutable original UTF-8 text preserving exact characters and line breaks. */
   originalText: string;
+  /** Optional authoritative SHA-256 digest of UTF-8 `originalText` for source integrity checks. */
+  originalTextSha256?: string;
   /** Explicit language metadata. */
   language: LiteraryLanguage;
   /** Explicit script metadata. */

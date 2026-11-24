@@ -146,16 +146,33 @@ async function run() {
     assert.ok(!roomHtml.includes("TEST/II-001"));
     assert.ok(!roomHtml.includes("TEST FIXTURES"));
 
-    // 6. Authenticated direct request to withheld poem returns 404 and leaks ZERO title/text/catalogId
-    const withheldReaderRes = await fetch(
-      `${ORIGIN}/archive/correspondence/for-you-poem`,
-      { headers: { cookie: cookieHeader } }
-    );
-    assert.equal(withheldReaderRes.status, 404);
-    const withheldHtml = await withheldReaderRes.text();
-    assert.ok(!withheldHtml.includes("तेरी आखों"));
-    assert.ok(!withheldHtml.includes("For You"));
-    assert.ok(!withheldHtml.includes("AU/II-001"));
+    // 6. Authenticated direct requests to withheld imported poems return 404 and leak ZERO title/text/catalogId
+    const withheldChecks = [
+      { slug: "for-you-poem", forbid: ["तेरी आखों", "For You", "AU/II-001"] },
+      { slug: "poem-002", forbid: ["यादों का मौसम", "AU/II-002"] },
+      { slug: "poem-004", forbid: ["एहतिसाब", "AU/II-004"] },
+      { slug: "poem-022", forbid: ["Saudade", "AU/II-022"] },
+      { slug: "poem-023", forbid: ["Izel", "AU/II-023"] },
+    ];
+
+    for (const check of withheldChecks) {
+      const withheldReaderRes = await fetch(
+        `${ORIGIN}/archive/correspondence/${check.slug}`,
+        { headers: { cookie: cookieHeader } }
+      );
+      assert.equal(
+        withheldReaderRes.status,
+        404,
+        `Withheld slug ${check.slug} must return 404`
+      );
+      const withheldHtml = await withheldReaderRes.text();
+      for (const token of check.forbid) {
+        assert.ok(
+          !withheldHtml.includes(token),
+          `Withheld route ${check.slug} leaked token: ${token}`
+        );
+      }
+    }
 
     // 7. Authenticated request to synthetic fixture slug on production route returns 404
     const synthProdRes = await fetch(

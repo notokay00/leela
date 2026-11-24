@@ -50,10 +50,10 @@ export function CorrespondenceReader({
     ? `Previous literary artefact: ${navigation.previous.catalogNumber}${
         navigation.previous.title
           ? ` — ${navigation.previous.title}`
-          : ` — Untitled ${formatArtefactTypeLabel(
+          : ` (${formatArtefactTypeLabel(
               navigation.previous.type,
               navigation.previous.customTypeLabel
-            )}`
+            )})`
       }`
     : undefined;
 
@@ -61,10 +61,10 @@ export function CorrespondenceReader({
     ? `Next literary artefact: ${navigation.next.catalogNumber}${
         navigation.next.title
           ? ` — ${navigation.next.title}`
-          : ` — Untitled ${formatArtefactTypeLabel(
+          : ` (${formatArtefactTypeLabel(
               navigation.next.type,
               navigation.next.customTypeLabel
-            )}`
+            )})`
       }`
     : undefined;
 
@@ -94,8 +94,12 @@ export function CorrespondenceReader({
       <article aria-labelledby="artefact-heading" className="pb-12 sm:pb-16">
         <header className="mb-10 border-b border-paper-hairline pb-7 sm:mb-12 sm:pb-8">
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 font-mono text-[11px] tracking-[0.16em] text-paper-ink-muted uppercase">
-            <span>{artefact.catalogNumber}</span>
-            <span aria-hidden="true">·</span>
+            {artefact.title && (
+              <>
+                <span>{artefact.catalogNumber}</span>
+                <span aria-hidden="true">·</span>
+              </>
+            )}
             <span>{typeLabel}</span>
             <span aria-hidden="true">·</span>
             <span>{languageMeta}</span>
@@ -123,9 +127,9 @@ export function CorrespondenceReader({
           ) : (
             <h1
               id="artefact-heading"
-              className="mt-4 font-serif text-2xl font-normal text-paper-ink-secondary italic sm:text-[1.85rem]"
+              className="mt-4 font-mono text-base font-normal tracking-[0.16em] text-paper-ink uppercase"
             >
-              {artefact.catalogNumber} — Untitled {typeLabel}
+              {artefact.catalogNumber}
             </h1>
           )}
 
