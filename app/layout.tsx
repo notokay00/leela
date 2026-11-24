@@ -7,10 +7,7 @@ import {
 } from "next/font/google";
 import { AudioDock } from "@/components/audio/AudioDock";
 import { AudioProvider } from "@/components/audio/AudioProvider";
-import {
-  ARCHIVE_SCORE_ASSET_ID,
-  isAuthorizedAudioConfigured,
-} from "@/lib/audio/availability";
+import { resolveServerArchiveSoundtrack } from "@/lib/audio/availability";
 import { cn } from "@/lib/cn";
 import "./globals.css";
 
@@ -70,10 +67,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const audioAvailable = isAuthorizedAudioConfigured();
-  const audioSrc = audioAvailable
-    ? `/api/media/${ARCHIVE_SCORE_ASSET_ID}`
-    : null;
+  const archiveTrack = resolveServerArchiveSoundtrack();
 
   return (
     <html
@@ -86,7 +80,11 @@ export default function RootLayout({
       )}
     >
       <body className="min-h-[100dvh] bg-void font-serif text-ink antialiased">
-        <AudioProvider available={audioAvailable} src={audioSrc}>
+        <AudioProvider
+          available={archiveTrack.available}
+          src={archiveTrack.src}
+          archiveTrack={archiveTrack}
+        >
           {children}
           <AudioDock />
         </AudioProvider>

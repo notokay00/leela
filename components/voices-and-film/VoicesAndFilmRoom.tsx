@@ -25,13 +25,19 @@ export interface VoicesAndFilmRoomProps {
  *   room entry and without per-frame React re-renders.
  */
 export function VoicesAndFilmRoom({ sections }: VoicesAndFilmRoomProps) {
-  const { state: audioState, pause: pauseDock } = useAudio();
+  const {
+    state: audioState,
+    pauseForRoomMedia,
+    resumeAfterRoomMedia,
+  } = useAudio();
   const mediaRegistryRef = useRef<Map<string, HTMLMediaElement>>(new Map());
   const dockStatusRef = useRef(audioState.status);
+  const dockCrossfadingRef = useRef(audioState.isCrossfading);
 
   useEffect(() => {
     dockStatusRef.current = audioState.status;
-  }, [audioState.status]);
+    dockCrossfadingRef.current = audioState.isCrossfading;
+  }, [audioState.isCrossfading, audioState.status]);
 
   const registerMedia = useCallback(
     (id: string, element: HTMLMediaElement | null) => {
@@ -45,14 +51,16 @@ export function VoicesAndFilmRoom({ sections }: VoicesAndFilmRoomProps) {
   );
 
   // When the visitor starts any recording, pause all other room recordings and
-  // gently pause the persistent background AudioDock so audio tracks never collide.
+  // gently pause the persistent background soundtrack so audio tracks never collide.
   const handleMediaPlay = useCallback(
     (targetId: string) => {
       const { pauseRecordingIds, shouldPauseDock } =
         resolveExclusivePlaybackTargets({
           targetId,
           registeredIds: Array.from(mediaRegistryRef.current.keys()),
-          dockStatus: dockStatusRef.current,
+          dockStatus: dockCrossfadingRef.current
+            ? "playing"
+            : dockStatusRef.current,
         });
 
       for (const otherId of pauseRecordingIds) {
@@ -63,16 +71,31 @@ export function VoicesAndFilmRoom({ sections }: VoicesAndFilmRoomProps) {
       }
 
       if (shouldPauseDock) {
-        pauseDock();
+        pauseForRoomMedia();
       }
     },
-    [pauseDock]
+    [pauseForRoomMedia]
+  );
+
+  // When a room recording finishes naturally, notify AudioProvider so it can
+  // gently restore the soundtrack ONLY if playback intent remained active and
+  // neither manual pause nor silence intervened.
+  const handleMediaEnded = useCallback(
+    (endedId: string) => {
+      for (const [id, el] of mediaRegistryRef.current.entries()) {
+        if (id !== endedId && !el.paused && !el.ended) {
+          return;
+        }
+      }
+      resumeAfterRoomMedia();
+    },
+    [resumeAfterRoomMedia]
   );
 
   // Conversely, if the visitor explicitly resumes the persistent AudioDock,
   // pause any active room recording so two audio sources never overlap.
   useEffect(() => {
-    if (audioState.status !== "playing") {
+    if (audioState.status !== "playing" && !audioState.isCrossfading) {
       return;
     }
     for (const el of mediaRegistryRef.current.values()) {
@@ -80,7 +103,7 @@ export function VoicesAndFilmRoom({ sections }: VoicesAndFilmRoomProps) {
         el.pause();
       }
     }
-  }, [audioState.status]);
+  }, [audioState.isCrossfading, audioState.status]);
 
   return (
     <div className="voices-film-container mx-auto w-full max-w-[60rem]">
@@ -155,6 +178,7 @@ export function VoicesAndFilmRoom({ sections }: VoicesAndFilmRoomProps) {
                         indexInSection={idx}
                         registerMedia={registerMedia}
                         onMediaPlay={handleMediaPlay}
+                        onMediaEnded={handleMediaEnded}
                       />
                     ))}
                   </div>
@@ -209,6 +233,7 @@ export function VoicesAndFilmRoom({ sections }: VoicesAndFilmRoomProps) {
                         indexInSection={idx}
                         registerMedia={registerMedia}
                         onMediaPlay={handleMediaPlay}
+                        onMediaEnded={handleMediaEnded}
                       />
                     ))}
                   </div>
@@ -256,6 +281,7 @@ export function VoicesAndFilmRoom({ sections }: VoicesAndFilmRoomProps) {
                         indexInSection={idx}
                         registerMedia={registerMedia}
                         onMediaPlay={handleMediaPlay}
+                        onMediaEnded={handleMediaEnded}
                       />
                     ))}
                   </div>

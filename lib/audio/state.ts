@@ -1,3 +1,10 @@
+import { ARCHIVE_DEFAULT_SOUNDTRACK } from "../../content/soundtracks.ts";
+import { toClientSoundtrackTrack } from "./soundtrack.ts";
+import type {
+  ClientSoundtrackTrack,
+  SoundPreference,
+} from "./soundtrack-types.ts";
+
 export type AudioPlaybackStatus =
   | "unavailable"
   | "idle"
@@ -18,10 +25,15 @@ export interface AudioState {
   available: boolean;
   src: string | null;
   cueTitle: string;
+  activeTrack: ClientSoundtrackTrack;
   status: AudioPlaybackStatus;
   volume: number;
   muted: boolean;
   enteredSilently: boolean;
+  soundPreference: SoundPreference;
+  manuallyPaused: boolean;
+  pausedForRoomMedia: boolean;
+  isCrossfading: boolean;
 }
 
 export const DEFAULT_AUDIO_CUE_TITLE = "Concierto de Aranjuez · II. Adagio";
@@ -34,20 +46,59 @@ export function clampVolume(value: number): number {
   return Math.min(1, Math.max(0, Math.round(value * 100) / 100));
 }
 
+export function createDefaultArchiveClientTrack(options?: {
+  available?: boolean;
+  src?: string | null;
+  title?: string;
+}): ClientSoundtrackTrack {
+  const isUsable = Boolean(options?.available && options?.src);
+  const base = toClientSoundtrackTrack(ARCHIVE_DEFAULT_SOUNDTRACK, {
+    available: isUsable,
+  });
+  return {
+    ...base,
+    title: options?.title ?? base.title,
+    available: isUsable,
+    availability: isUsable ? "available" : "unavailable",
+    src: isUsable ? (options?.src ?? base.src) : null,
+  };
+}
+
 export function createInitialAudioState(options: {
   available: boolean;
   src: string | null;
   cueTitle?: string;
+  activeTrack?: ClientSoundtrackTrack;
 }): AudioState {
-  const isUsable = options.available && Boolean(options.src);
+  const activeTrack =
+    options.activeTrack ??
+    createDefaultArchiveClientTrack({
+      available: options.available,
+      src: options.src,
+      title: options.cueTitle ?? ARCHIVE_DEFAULT_SOUNDTRACK.title,
+    });
+  const isUsable = activeTrack.available && Boolean(activeTrack.src);
+
   return {
     available: isUsable,
-    src: isUsable ? options.src : null,
-    cueTitle: options.cueTitle ?? DEFAULT_AUDIO_CUE_TITLE,
+    src: isUsable ? activeTrack.src : null,
+    cueTitle:
+      options.cueTitle ??
+      (options.activeTrack ? options.activeTrack.title : DEFAULT_AUDIO_CUE_TITLE),
+    activeTrack: {
+      ...activeTrack,
+      available: isUsable,
+      availability: isUsable ? "available" : "unavailable",
+      src: isUsable ? activeTrack.src : null,
+    },
     status: isUsable ? "idle" : "unavailable",
     volume: DEFAULT_AUDIO_VOLUME,
     muted: false,
     enteredSilently: false,
+    soundPreference: "unset",
+    manuallyPaused: false,
+    pausedForRoomMedia: false,
+    isCrossfading: false,
   };
 }
 

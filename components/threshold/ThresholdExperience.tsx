@@ -25,7 +25,7 @@ export function ThresholdExperience({
   audioAvailable,
 }: ThresholdExperienceProps) {
   const router = useRouter();
-  const { play: startAudioPlayback, enterInSilence } = useAudio();
+  const { enterWithSound, enterInSilence } = useAudio();
   const [state, setState] = useState<ThresholdState>(() =>
     createInitialThresholdState(initialAuthenticated)
   );
@@ -128,7 +128,7 @@ export function ThresholdExperience({
     }
 
     if (action.shouldInitiateAudio) {
-      startAudioPlayback();
+      enterWithSound();
       router.push("/archive");
       return;
     }

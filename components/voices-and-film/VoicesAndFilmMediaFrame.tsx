@@ -13,6 +13,7 @@ export interface VoicesAndFilmMediaFrameProps {
   indexInSection: number;
   registerMedia: (id: string, element: HTMLMediaElement | null) => void;
   onMediaPlay: (id: string) => void;
+  onMediaEnded?: (id: string) => void;
 }
 
 const ASPECT_CLASS_BY_KEY: Record<MediaAspectClassKey, string> = {
@@ -42,6 +43,7 @@ export function VoicesAndFilmMediaFrame({
   indexInSection,
   registerMedia,
   onMediaPlay,
+  onMediaEnded,
 }: VoicesAndFilmMediaFrameProps) {
   const mediaRef = useRef<HTMLMediaElement | null>(null);
   const [playbackState, setPlaybackState] = useState<
@@ -146,7 +148,10 @@ export function VoicesAndFilmMediaFrame({
                     prev === "ended" ? "ended" : "paused"
                   );
                 }}
-                onEnded={() => setPlaybackState("ended")}
+                onEnded={() => {
+                  setPlaybackState("ended");
+                  onMediaEnded?.(item.id);
+                }}
                 className="w-full"
               >
                 <source
@@ -173,7 +178,10 @@ export function VoicesAndFilmMediaFrame({
                     prev === "ended" ? "ended" : "paused"
                   );
                 }}
-                onEnded={() => setPlaybackState("ended")}
+                onEnded={() => {
+                  setPlaybackState("ended");
+                  onMediaEnded?.(item.id);
+                }}
                 className="vf-video-contain"
               >
                 <source src={item.src} type={item.mimeType} />
@@ -284,7 +292,10 @@ export function VoicesAndFilmMediaFrame({
                 prev === "ended" ? "ended" : "paused"
               );
             }}
-            onEnded={() => setPlaybackState("ended")}
+            onEnded={() => {
+              setPlaybackState("ended");
+              onMediaEnded?.(item.id);
+            }}
             className="vf-video-contain"
           >
             <source src={item.src} type={item.mimeType} />

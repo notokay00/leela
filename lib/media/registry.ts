@@ -4,6 +4,8 @@ import type { PublishStatus } from "@/content/types";
 
 export type MediaSensitivity = "high" | "standard";
 
+export type MediaAssetCategory = "personal-media" | "music-soundtrack";
+
 export interface MediaAssetRecord {
   /** Opaque public/API identifier (no paths, slashes, dots, or extensions). */
   id: string;
@@ -13,7 +15,14 @@ export interface MediaAssetRecord {
   downloadFilename: string;
   sensitivity: MediaSensitivity;
   publishStatus: PublishStatus;
+  /** Personal-media consent confirmation (never a substitute for music hosting rights). */
   consentConfirmed: boolean;
+  /** Defaults to `"personal-media"` when omitted. */
+  assetCategory?: MediaAssetCategory;
+  /** Musical licensing/hosting authorization (required when assetCategory === "music-soundtrack"). */
+  hostingRightsConfirmed?: boolean;
+  /** True only for isolated synthetic test fixtures loaded outside the production registry. */
+  isSyntheticTestFixture?: boolean;
 }
 
 const OPAQUE_ASSET_ID_PATTERN = /^[a-z0-9][a-z0-9-]{1,63}$/;
@@ -59,12 +68,20 @@ export function isValidOpaqueAssetId(raw: string): boolean {
 }
 
 export function isApprovedMediaRecord(record: MediaAssetRecord): boolean {
-  return (
-    isValidOpaqueAssetId(record.id) &&
-    ALLOWED_MIME_TYPES.has(record.mimeType) &&
-    record.publishStatus === "ready" &&
-    record.consentConfirmed === true
-  );
+  if (
+    !isValidOpaqueAssetId(record.id) ||
+    !ALLOWED_MIME_TYPES.has(record.mimeType) ||
+    record.publishStatus !== "ready"
+  ) {
+    return false;
+  }
+
+  if (record.assetCategory === "music-soundtrack") {
+    // Musical licensing/hosting authorization is strictly separate from personal consent.
+    return record.hostingRightsConfirmed === true;
+  }
+
+  return record.consentConfirmed === true;
 }
 
 function loadSyntheticTestRecords(
@@ -99,7 +116,24 @@ function loadSyntheticTestRecords(
           item.publishStatus === "withheld") &&
         typeof item.consentConfirmed === "boolean"
       ) {
-        records.push(item as MediaAssetRecord);
+        const assetCategory: MediaAssetCategory | undefined =
+          item.assetCategory === "music-soundtrack" ||
+          item.assetCategory === "personal-media"
+            ? item.assetCategory
+            : undefined;
+        const hostingRightsConfirmed: boolean | undefined =
+          typeof item.hostingRightsConfirmed === "boolean"
+            ? item.hostingRightsConfirmed
+            : undefined;
+
+        records.push({
+          ...(item as MediaAssetRecord),
+          ...(assetCategory ? { assetCategory } : {}),
+          ...(hostingRightsConfirmed !== undefined
+            ? { hostingRightsConfirmed }
+            : {}),
+          isSyntheticTestFixture: true,
+        });
       }
     }
     return records;
