@@ -103,8 +103,11 @@ describe("Milestone 2.1 design tokens, reduced-motion, and literary preservation
     const css = readFileSync("app/globals.css", "utf8");
 
     const stripCommentsAndExpressions = (source: string) => {
-      const returnIdx = source.indexOf("return (");
-      const jsxSection = returnIdx >= 0 ? source.slice(returnIdx) : source;
+      const exportIdx = source.indexOf("export function ");
+      const componentSection = exportIdx >= 0 ? source.slice(exportIdx) : source;
+      const returnIdx = componentSection.indexOf("return (");
+      const jsxSection =
+        returnIdx >= 0 ? componentSection.slice(returnIdx) : componentSection;
       return jsxSection
         .replace(/\/\*[\s\S]*?\*\//g, "")
         .replace(/\/\/.*$/gm, "")
@@ -136,10 +139,14 @@ describe("Milestone 2.1 design tokens, reduced-motion, and literary preservation
 
     assert.ok(css.includes(".threshold-storybook"));
     assert.ok(css.includes(".willow-curtain"));
+    assert.ok(css.includes(".willow-tip-cluster"));
+    assert.ok(css.includes(".threshold-lake-reflection"));
     assert.ok(css.includes(".threshold-lake-shimmer"));
     assert.ok(css.includes(".threshold-sunbeam"));
+    assert.ok(css.includes(".threshold-dapple-pool"));
     assert.ok(css.includes(".threshold-pollen-mote"));
     assert.ok(css.includes("willowBreezeA"));
+    assert.ok(css.includes("willowTipFollowA"));
     assert.ok(css.includes("willowWaterRippleA"));
     assert.ok(css.includes("animation: none;"));
   });
