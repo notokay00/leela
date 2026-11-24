@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
+import Link from "next/link";
 import { useAudio } from "@/components/audio/AudioProvider";
 import { cn } from "@/lib/cn";
 import { resolveExclusivePlaybackTargets } from "@/lib/voices-and-film/collection";
@@ -274,6 +275,17 @@ export function VoicesAndFilmRoom({ sections }: VoicesAndFilmRoomProps) {
           );
         })}
       </div>
+
+      {/* Quiet forward transition into the concluding movement */}
+      <footer className="mt-20 flex justify-end border-t border-[var(--room-voices-film-hairline)]/80 pt-10 sm:mt-24">
+        <Link
+          href="/archive/cadenza"
+          className="threshold-control inline-flex min-h-[2.75rem] items-center gap-2.5 font-serif text-lg tracking-[0.02em] text-vf-ink-secondary italic hover:text-vf-ink"
+        >
+          <span>Cadenza</span>
+          <span aria-hidden="true">→</span>
+        </Link>
+      </footer>
     </div>
   );
 }

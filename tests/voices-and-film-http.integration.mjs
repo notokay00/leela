@@ -110,7 +110,7 @@ async function run() {
     assert.equal(indexRes.status, 200);
     const indexHtml = await indexRes.text();
     assert.ok(indexHtml.includes('href="/archive/voices-and-film"'));
-    assert.ok(!indexHtml.includes('href="/archive/cadenza"'));
+    assert.ok(indexHtml.includes('href="/archive/cadenza"'));
     assert.ok(!indexHtml.includes("AU/III"));
 
     // 5. Authenticated Voices & Film returns 200 with strict nonce CSP and exact section order

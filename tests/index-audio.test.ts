@@ -33,27 +33,24 @@ describe("Milestone 2.2 Editorial Index structure and active-room rules", () => 
     );
   });
 
-  it("activates navigation links ONLY for implemented rooms and keeps unimplemented rooms inert", () => {
-    // Stillness (I), Correspondence (II), and Voices & Film (III) are implemented; Cadenza (IV) stays inert
-    assert.equal(ARCHIVE_MOVEMENTS[0].implemented, true);
-    assert.equal(getMovementHref(ARCHIVE_MOVEMENTS[0]), "/archive/stillness");
+  it("activates navigation links for all four implemented archive movements", () => {
+    const expectedHrefs = [
+      "/archive/stillness",
+      "/archive/correspondence",
+      "/archive/voices-and-film",
+      "/archive/cadenza",
+    ];
 
-    assert.equal(ARCHIVE_MOVEMENTS[1].implemented, true);
+    ARCHIVE_MOVEMENTS.forEach((movement, index) => {
+      assert.equal(movement.implemented, true);
+      assert.equal(getMovementHref(movement), expectedHrefs[index]);
+    });
+
+    // Unimplemented entries still return null safely if added in the future
     assert.equal(
-      getMovementHref(ARCHIVE_MOVEMENTS[1]),
-      "/archive/correspondence"
+      getMovementHref({ ...ARCHIVE_MOVEMENTS[3], implemented: false }),
+      null
     );
-
-    assert.equal(ARCHIVE_MOVEMENTS[2].implemented, true);
-    assert.equal(
-      getMovementHref(ARCHIVE_MOVEMENTS[2]),
-      "/archive/voices-and-film"
-    );
-
-    for (const movement of ARCHIVE_MOVEMENTS.slice(3)) {
-      assert.equal(movement.implemented, false);
-      assert.equal(getMovementHref(movement), null);
-    }
   });
 
   it("defines distinct room-colour sliver rules in globals.css and mounts AudioDock at root layout", () => {

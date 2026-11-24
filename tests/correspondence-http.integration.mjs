@@ -124,7 +124,7 @@ async function run() {
     assert.ok(indexHtml.includes('href="/archive/stillness"'));
     assert.ok(indexHtml.includes('href="/archive/correspondence"'));
     assert.ok(indexHtml.includes('href="/archive/voices-and-film"'));
-    assert.ok(!indexHtml.includes('href="/archive/cadenza"'));
+    assert.ok(indexHtml.includes('href="/archive/cadenza"'));
     assert.ok(!indexHtml.includes("AU/I"));
     assert.ok(!indexHtml.includes("AU/II"));
     assert.ok(!indexHtml.includes("AU/III"));

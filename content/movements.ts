@@ -51,9 +51,9 @@ export const ARCHIVE_MOVEMENTS: readonly ArchiveMovementEntry[] = [
     numeral: "IV",
     title: "Cadenza",
     catalogueRef: "AU/IV",
-    description: "What remained unsaid.",
+    description: "Things left unsaid.",
     groundToken: "cadenza",
-    implemented: false,
+    implemented: true,
   },
 ];
 
