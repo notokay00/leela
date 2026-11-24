@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { ORIGINAL_FOR_YOU_POEM_TEXT } from "../content/artifacts/correspondence.ts";
 import {
@@ -114,6 +114,11 @@ describe("Milestone 2.1 design tokens, reduced-motion, and literary preservation
     assert.ok(experience.includes("<ThresholdWillowBackdrop"));
     assert.ok(backdrop.includes('aria-hidden="true"'));
     assert.ok(backdrop.includes("pointer-events-none"));
+    assert.ok(backdrop.includes('alt=""'));
+    assert.ok(backdrop.includes("/images/threshold-garden-desktop.webp"));
+    assert.ok(backdrop.includes("/images/threshold-garden-mobile.webp"));
+    assert.ok(existsSync("public/images/threshold-garden-desktop.webp"));
+    assert.ok(existsSync("public/images/threshold-garden-mobile.webp"));
     assert.equal(backdrop.includes("style={{"), false);
     assert.equal(backdrop.includes("<title"), false);
     assert.equal(backdrop.includes("<desc"), false);
@@ -129,7 +134,10 @@ describe("Milestone 2.1 design tokens, reduced-motion, and literary preservation
       false
     );
 
+    assert.ok(css.includes(".threshold-storybook"));
     assert.ok(css.includes(".willow-curtain"));
+    assert.ok(css.includes(".threshold-sunbeam"));
+    assert.ok(css.includes(".threshold-pollen-mote"));
     assert.ok(css.includes("willowBreezeA"));
     assert.ok(css.includes("animation: none;"));
   });

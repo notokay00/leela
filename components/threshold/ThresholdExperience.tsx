@@ -153,15 +153,15 @@ export function ThresholdExperience({
   const isAccepted = state.status === "accepted";
 
   return (
-    <main className="threshold-stage threshold-reveal relative flex flex-col items-center justify-center overflow-hidden bg-void text-ink">
+    <main className="threshold-stage threshold-storybook threshold-reveal relative flex flex-col items-center justify-center overflow-hidden">
       <ThresholdWillowBackdrop />
 
       <div className="threshold-foreground relative z-10 flex w-full max-w-md flex-col items-center text-center">
-        <h1 className="threshold-title font-serif font-normal tracking-[0.26em] text-ink uppercase">
+        <h1 className="threshold-title threshold-storybook-title font-serif font-normal tracking-[0.26em] text-[#241f19] uppercase">
           The Archive of Us
         </h1>
 
-        <div className="mt-12 w-full max-w-[17rem]">
+        <div className="mt-10 w-full max-w-[17rem] sm:mt-12">
           {!isAccepted ? (
             <form
               onSubmit={handleSubmit}
@@ -197,9 +197,9 @@ export function ThresholdExperience({
                 placeholder="passphrase"
                 aria-describedby="threshold-status-message"
                 className={cn(
-                  "threshold-control w-full border-0 border-b border-ink-muted/75 bg-transparent px-1 py-2.5 text-center font-sans text-sm tracking-[0.14em] text-ink placeholder:text-ink-secondary/80",
-                  "focus:border-hairline-strong focus:outline-none focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-focus",
-                  isPending && "cursor-wait opacity-40"
+                  "threshold-control threshold-storybook-input w-full border-0 border-b border-[#4a4033]/45 bg-transparent px-1 py-2.5 text-center font-sans text-sm tracking-[0.14em] text-[#241f19] placeholder:text-[#574c3f]",
+                  "focus:border-[#241f19] focus:outline-none focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-[#241f19]",
+                  isPending && "cursor-wait opacity-45"
                 )}
               />
 
@@ -207,7 +207,7 @@ export function ThresholdExperience({
                 id="threshold-status-message"
                 role="status"
                 aria-live="polite"
-                className="mt-5 min-h-[1.25rem] font-sans text-xs tracking-[0.06em] text-ink-dim"
+                className="mt-5 min-h-[1.25rem] font-sans text-xs tracking-[0.06em] text-[#55493b]"
               >
                 {isPending ? "Verifying…" : (state.rejectionMessage ?? "")}
               </p>
@@ -227,7 +227,7 @@ export function ThresholdExperience({
                   disabled={isNavigating}
                   onClick={() => handleEntryChoice("sound")}
                   className={cn(
-                    "threshold-control cursor-pointer bg-transparent px-2 py-1.5 font-serif text-lg italic tracking-[0.04em] text-ink-secondary hover:text-ink",
+                    "threshold-control cursor-pointer bg-transparent px-2 py-1.5 font-serif text-lg italic tracking-[0.04em] text-[#3f362c] hover:text-[#1d1813] focus-visible:outline-[#241f19]",
                     isNavigating && "cursor-wait opacity-50"
                   )}
                 >
@@ -239,7 +239,7 @@ export function ThresholdExperience({
                   disabled={isNavigating}
                   onClick={() => handleEntryChoice("silence")}
                   className={cn(
-                    "threshold-control cursor-pointer bg-transparent px-2 py-1.5 font-serif text-lg italic tracking-[0.04em] text-ink-secondary hover:text-ink",
+                    "threshold-control cursor-pointer bg-transparent px-2 py-1.5 font-serif text-lg italic tracking-[0.04em] text-[#3f362c] hover:text-[#1d1813] focus-visible:outline-[#241f19]",
                     isNavigating && "cursor-wait opacity-50"
                   )}
                 >
@@ -250,7 +250,7 @@ export function ThresholdExperience({
               <p
                 role="status"
                 aria-live="polite"
-                className="mt-6 min-h-[1.25rem] font-sans text-xs tracking-[0.04em] text-ink-dim"
+                className="mt-6 min-h-[1.25rem] font-sans text-xs tracking-[0.04em] text-[#55493b]"
               >
                 {state.audioFallbackNotice ?? ""}
               </p>

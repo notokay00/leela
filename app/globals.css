@@ -184,187 +184,447 @@
 }
 
 /* ==========================================================================
-   THRESHOLD — NOCTURNAL WEEPING WILLOW BACKDROP
+   THRESHOLD — SUNLIT STORYBOOK WILLOW GARDEN BACKDROP
    ========================================================================== */
 
-.threshold-willow-layer {
+.threshold-storybook {
+  color-scheme: light;
+  background-color: #d6e8ed;
+  color: #241f19;
+}
+
+.threshold-storybook ::selection {
+  background-color: rgba(36, 31, 25, 0.14);
+  color: #241f19;
+}
+
+.threshold-storybook-title {
+  text-shadow: 0 1px 18px rgba(255, 251, 244, 0.72);
+}
+
+.threshold-garden-layer {
   position: absolute;
   inset: 0;
   z-index: 0;
   overflow: hidden;
+}
+
+/* Seamless luminous pastel afternoon sky continuation behind the painted canvas */
+.threshold-storybook-sky {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    #c6e0e7 0%,
+    #d2e7ec 22%,
+    #e4efee 48%,
+    #f9f1e4 78%,
+    #f3e6cf 100%
+  );
+}
+
+/*
+ * Responsive storybook illustration framing:
+ * - Mobile (< 768px): anchors the 9:16 portrait painting cleanly to the bottom
+ *   at full viewport width so the complete weeping willow and wildflower meadow
+ *   are NEVER horizontally cropped, while the upper pastel sky feathers
+ *   invisibly into `.threshold-storybook-sky` behind the title & input.
+ * - Desktop (>= 768px): full-bleed widescreen 16:9 painting anchored slightly
+ *   right (`object-position: 86% 52%`) so the entire sunlit willow towers
+ *   uncropped on the right and serene open pastel sky fills the left.
+ */
+.threshold-garden-picture {
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: flex-end;
   justify-content: center;
 }
 
-.threshold-dusk-atmosphere {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(
-      ellipse 80% 54% at 50% 66%,
-      rgba(68, 82, 102, 0.2) 0%,
-      rgba(24, 30, 41, 0.14) 48%,
-      rgba(7, 7, 9, 0) 80%
-    ),
-    linear-gradient(
-      180deg,
-      rgba(130, 146, 168, 0) 0%,
-      rgba(130, 146, 168, 0) 74%,
-      rgba(116, 132, 154, 0.065) 87%,
-      rgba(7, 7, 9, 0) 97%
-    ),
-    linear-gradient(
-      180deg,
-      #060709 0%,
-      #090b10 46%,
-      #0e1219 78%,
-      #07080b 100%
-    );
-}
-
-.threshold-ground-bank {
-  position: absolute;
-  left: -8vw;
-  right: -8vw;
-  bottom: -2rem;
-  height: clamp(3.25rem, 8dvh, 5.25rem);
-  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
-  background: linear-gradient(
-    180deg,
-    rgba(16, 20, 27, 0.88) 0%,
-    rgba(10, 12, 16, 0.98) 42%,
-    #070709 100%
+.threshold-garden-artwork {
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+  object-fit: cover;
+  object-position: 50% 100%;
+  display: block;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.55) 7%,
+    #000 18%,
+    #000 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.55) 7%,
+    #000 18%,
+    #000 100%
   );
 }
 
-/*
- * Responsive botanical composition:
- * - Mobile (< 768px): keeps the full weeping willow silhouette uncropped in
- *   the lower half of the portrait frame while Threshold text sits clearly in
- *   the serene dusk sky above.
- * - Desktop (>= 768px): grand solitary willow grounded on the dusk horizon to
- *   the right while the title and passphrase input rest cleanly in the quiet
- *   twilight space on the left.
- */
-.threshold-willow-svg {
-  position: relative;
-  width: min(116vw, 480px);
-  max-width: none;
-  height: auto;
-  max-height: 58dvh;
-  transform: translate3d(0, 1.5%, 0);
-  opacity: 0.96;
-}
-
 .threshold-foreground {
-  transform: translate3d(0, -15vh, 0);
+  transform: translate3d(0, -24vh, 0);
 }
 
-.threshold-readability-vignette {
+/* Gentle sunlit atmosphere behind the foreground title & passphrase input */
+.threshold-readability-veil {
   position: absolute;
   inset: 0;
   background: radial-gradient(
-    ellipse 58% 34% at 50% 34%,
-    rgba(7, 8, 11, 0.72) 0%,
-    rgba(7, 8, 11, 0.24) 62%,
+    ellipse 64% 28% at 50% 25%,
+    rgba(251, 249, 244, 0.48) 0%,
+    rgba(251, 249, 244, 0.16) 62%,
     transparent 100%
   );
 }
 
+/* Soft dappled afternoon sunlight shifting gently across the willow canopy */
+.threshold-sunlight-veil {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.threshold-sunbeam {
+  position: absolute;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.threshold-sunbeam-a {
+  top: 26%;
+  left: 10%;
+  width: 82%;
+  height: 54%;
+  background: radial-gradient(
+    ellipse 55% 46% at 56% 48%,
+    rgba(255, 247, 214, 0.34) 0%,
+    rgba(255, 236, 188, 0.14) 50%,
+    transparent 76%
+  );
+  animation: willowSunShiftA 19.7s ease-in-out infinite;
+}
+
+.threshold-sunbeam-b {
+  top: 38%;
+  right: -8%;
+  width: 72%;
+  height: 48%;
+  background: radial-gradient(
+    ellipse 50% 42% at 50% 50%,
+    rgba(255, 244, 200, 0.28) 0%,
+    rgba(255, 234, 182, 0.1) 54%,
+    transparent 78%
+  );
+  animation: willowSunShiftB 23.3s ease-in-out -6.4s infinite;
+}
+
+/* Living breeze overlay SVGs (mobile shown < 48rem, desktop shown >= 48rem) */
+.threshold-breeze-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.threshold-breeze-desktop {
+  display: none;
+}
+
+.threshold-breeze-mobile {
+  display: block;
+  top: auto;
+  height: auto;
+  aspect-ratio: 768 / 1376;
+}
+
+/* Sparingly placed sunlit pollen motes drifting slowly through warm afternoon air */
+.threshold-pollen-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.threshold-pollen-mote {
+  position: absolute;
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle,
+    rgba(255, 251, 224, 0.96) 0%,
+    rgba(252, 232, 166, 0.56) 46%,
+    rgba(252, 232, 166, 0) 100%
+  );
+  will-change: transform, opacity;
+}
+
+.threshold-pollen-1 {
+  width: 6px;
+  height: 6px;
+  left: 24%;
+  top: 66%;
+  animation: willowPollenA 17.3s ease-in-out -2.4s infinite;
+}
+
+.threshold-pollen-2 {
+  width: 5px;
+  height: 5px;
+  left: 42%;
+  top: 58%;
+  animation: willowPollenB 21.1s ease-in-out -8.2s infinite;
+}
+
+.threshold-pollen-3 {
+  width: 7px;
+  height: 7px;
+  left: 68%;
+  top: 52%;
+  animation: willowPollenC 19.3s ease-in-out -4.7s infinite;
+}
+
+.threshold-pollen-4 {
+  width: 5px;
+  height: 5px;
+  left: 78%;
+  top: 69%;
+  animation: willowPollenA 22.7s ease-in-out -11.5s infinite;
+}
+
+.threshold-pollen-5 {
+  width: 6px;
+  height: 6px;
+  left: 58%;
+  top: 76%;
+  animation: willowPollenB 16.9s ease-in-out -6.1s infinite;
+}
+
+.threshold-pollen-6 {
+  width: 4px;
+  height: 4px;
+  left: 33%;
+  top: 78%;
+  animation: willowPollenC 20.3s ease-in-out -13.2s infinite;
+}
+
+.threshold-pollen-7 {
+  width: 5px;
+  height: 5px;
+  left: 84%;
+  top: 44%;
+  animation: willowPollenA 18.7s ease-in-out -3.8s infinite;
+}
+
 @media (min-width: 48rem) {
-  .threshold-dusk-atmosphere {
-    background:
-      radial-gradient(
-        ellipse 64% 62% at 68% 54%,
-        rgba(74, 89, 112, 0.22) 0%,
-        rgba(24, 30, 42, 0.14) 48%,
-        rgba(7, 7, 9, 0) 80%
-      ),
-      linear-gradient(
-        180deg,
-        rgba(130, 146, 168, 0) 0%,
-        rgba(130, 146, 168, 0) 76%,
-        rgba(116, 132, 154, 0.06) 89%,
-        rgba(7, 7, 9, 0) 98%
-      ),
-      linear-gradient(
-        180deg,
-        #060709 0%,
-        #090b10 48%,
-        #0e1219 80%,
-        #07080b 100%
-      );
+  .threshold-storybook-sky {
+    background: linear-gradient(
+      180deg,
+      #c9e4eb 0%,
+      #dceef1 32%,
+      #f8eee0 72%,
+      #efe3cb 100%
+    );
   }
 
-  .threshold-willow-svg {
-    width: min(76vw, 960px);
-    height: min(94dvh, 840px);
+  .threshold-garden-artwork {
+    width: 100%;
+    height: 100%;
     max-height: none;
-    transform: translate3d(clamp(8.5rem, 18.5vw, 16.5rem), 2%, 0);
-    opacity: 0.95;
+    object-fit: cover;
+    object-position: 86% 52%;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  .threshold-breeze-desktop {
+    display: block;
+  }
+
+  .threshold-breeze-mobile {
+    display: none;
   }
 
   .threshold-foreground {
-    transform: translate3d(clamp(-15rem, -17.5vw, -5.5rem), -2vh, 0);
+    transform: translate3d(clamp(-17.5rem, -21vw, -7rem), -4vh, 0);
   }
 
-  .threshold-readability-vignette {
+  .threshold-readability-veil {
     background: radial-gradient(
-      ellipse 36% 42% at 33% 48%,
-      rgba(7, 8, 11, 0.72) 0%,
-      rgba(7, 8, 11, 0.28) 58%,
+      ellipse 34% 38% at 29% 46%,
+      rgba(252, 249, 242, 0.52) 0%,
+      rgba(252, 249, 242, 0.18) 58%,
       transparent 100%
     );
+  }
+
+  .threshold-sunbeam-a {
+    top: 8%;
+    left: 42%;
+    width: 56%;
+    height: 70%;
+  }
+
+  .threshold-sunbeam-b {
+    top: 22%;
+    right: 2%;
+    width: 48%;
+    height: 64%;
+  }
+
+  .threshold-pollen-1 {
+    left: 44%;
+    top: 48%;
+  }
+
+  .threshold-pollen-2 {
+    left: 52%;
+    top: 64%;
+  }
+
+  .threshold-pollen-3 {
+    left: 63%;
+    top: 38%;
+  }
+
+  .threshold-pollen-4 {
+    left: 74%;
+    top: 66%;
+  }
+
+  .threshold-pollen-5 {
+    left: 88%;
+    top: 56%;
+  }
+
+  .threshold-pollen-6 {
+    left: 48%;
+    top: 78%;
+  }
+
+  .threshold-pollen-7 {
+    left: 68%;
+    top: 26%;
   }
 }
 
 /*
- * Subtle, organic, asynchronous weeping-branch breeze keyframes.
- * Prime-offset durations and irregular micro-angles avoid mechanical motion.
+ * Gentle, organic afternoon-breeze keyframes for swaying weeping fronds,
+ * imperceptibly shifting sunlight, and delicate drifting pollen.
  */
 @keyframes willowBreezeA {
   0%,
   100% {
-    transform: rotate(-1.05deg);
+    transform: rotate(-1.25deg);
   }
   34% {
-    transform: rotate(0.75deg);
+    transform: rotate(0.95deg);
   }
   67% {
-    transform: rotate(-0.35deg);
+    transform: rotate(-0.4deg);
   }
   84% {
-    transform: rotate(1.15deg);
+    transform: rotate(1.35deg);
   }
 }
 
 @keyframes willowBreezeB {
   0%,
   100% {
-    transform: rotate(0.95deg);
+    transform: rotate(1.15deg);
   }
   29% {
-    transform: rotate(-0.85deg);
+    transform: rotate(-1.05deg);
   }
   61% {
-    transform: rotate(0.45deg);
+    transform: rotate(0.55deg);
   }
   81% {
-    transform: rotate(-1.25deg);
+    transform: rotate(-1.4deg);
   }
 }
 
 @keyframes willowBreezeC {
   0%,
   100% {
-    transform: rotate(-0.75deg);
+    transform: rotate(-0.9deg);
   }
   41% {
-    transform: rotate(1.35deg);
+    transform: rotate(1.5deg);
   }
   73% {
-    transform: rotate(-0.95deg);
+    transform: rotate(-1.1deg);
+  }
+}
+
+@keyframes willowSunShiftA {
+  0%,
+  100% {
+    opacity: 0.42;
+    transform: translate3d(-1.2%, -0.8%, 0) scale(1);
+  }
+  50% {
+    opacity: 0.78;
+    transform: translate3d(1.6%, 1.2%, 0) scale(1.04);
+  }
+}
+
+@keyframes willowSunShiftB {
+  0%,
+  100% {
+    opacity: 0.34;
+    transform: translate3d(1.4%, 0.6%, 0) scale(1.02);
+  }
+  50% {
+    opacity: 0.72;
+    transform: translate3d(-1.4%, -1.2%, 0) scale(0.98);
+  }
+}
+
+@keyframes willowPollenA {
+  0%,
+  100% {
+    opacity: 0.18;
+    transform: translate3d(0, 0, 0) scale(0.9);
+  }
+  35% {
+    opacity: 0.76;
+    transform: translate3d(14px, -18px, 0) scale(1.1);
+  }
+  70% {
+    opacity: 0.48;
+    transform: translate3d(-6px, -30px, 0) scale(0.95);
+  }
+}
+
+@keyframes willowPollenB {
+  0%,
+  100% {
+    opacity: 0.22;
+    transform: translate3d(0, 0, 0) scale(0.85);
+  }
+  42% {
+    opacity: 0.72;
+    transform: translate3d(-16px, -14px, 0) scale(1.12);
+  }
+  76% {
+    opacity: 0.4;
+    transform: translate3d(8px, -26px, 0) scale(0.95);
+  }
+}
+
+@keyframes willowPollenC {
+  0%,
+  100% {
+    opacity: 0.16;
+    transform: translate3d(0, 0, 0) scale(0.9);
+  }
+  48% {
+    opacity: 0.74;
+    transform: translate3d(12px, -22px, 0) scale(1.08);
+  }
+  80% {
+    opacity: 0.36;
+    transform: translate3d(20px, -10px, 0) scale(0.9);
   }
 }
 
@@ -375,34 +635,19 @@
 }
 
 .willow-sway-1 {
-  animation: willowBreezeA 14.3s ease-in-out -2.1s infinite;
+  animation: willowBreezeA 13.7s ease-in-out -2.1s infinite;
 }
 .willow-sway-2 {
-  animation: willowBreezeB 16.7s ease-in-out -7.4s infinite;
+  animation: willowBreezeB 15.9s ease-in-out -7.4s infinite;
 }
 .willow-sway-3 {
-  animation: willowBreezeC 15.1s ease-in-out -4.6s infinite;
+  animation: willowBreezeC 14.3s ease-in-out -4.6s infinite;
 }
 .willow-sway-4 {
-  animation: willowBreezeA 17.9s ease-in-out -10.2s infinite;
+  animation: willowBreezeA 16.7s ease-in-out -10.2s infinite;
 }
 .willow-sway-5 {
-  animation: willowBreezeB 12.7s ease-in-out -3.3s infinite;
-}
-.willow-sway-6 {
-  animation: willowBreezeC 13.9s ease-in-out -8.7s infinite;
-}
-.willow-sway-7 {
-  animation: willowBreezeA 11.9s ease-in-out -5.5s infinite;
-}
-.willow-sway-8 {
-  animation: willowBreezeB 14.9s ease-in-out -1.4s infinite;
-}
-.willow-sway-9 {
-  animation: willowBreezeC 11.3s ease-in-out -6.8s infinite;
-}
-.willow-sway-10 {
-  animation: willowBreezeA 13.1s ease-in-out -9.1s infinite;
+  animation: willowBreezeB 12.3s ease-in-out -3.3s infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -413,7 +658,9 @@
   .threshold-control {
     transition-duration: 0ms;
   }
-  .willow-curtain {
+  .willow-curtain,
+  .threshold-sunbeam,
+  .threshold-pollen-mote {
     animation: none;
     transform: none;
     will-change: auto;
