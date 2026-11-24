@@ -13,8 +13,9 @@
   --room-stillness-table: #0b0d10;
   --room-stillness-elevated: #101216;
   --room-stillness-hairline: #1a1d21;
-  --room-correspondence: #f3efe6;
-  --room-correspondence-surface: #ebe5d8;
+  --room-correspondence: #ede6d9;
+  --room-correspondence-surface: #e5dccb;
+  --room-correspondence-elevated: #f3eee5;
   --room-voices-film: #040405;
   --room-cadenza: #070709;
 
@@ -24,11 +25,12 @@
   --ink-dim: #6e7075;
   --ink-muted: #56585d;
 
-  /* Light-room (Correspondence) ink hierarchy */
-  --ink-paper-primary: #1a1816;
-  --ink-paper-secondary: #56514b;
-  --ink-paper-dim: #736d65;
-  --hairline-paper: rgba(26, 24, 22, 0.14);
+  /* Light-room (Correspondence — Warm Literary Room) ink & divider hierarchy */
+  --ink-paper-primary: #29251f;
+  --ink-paper-secondary: #665f55;
+  --ink-paper-muted: #6e6456;
+  --ink-paper-dim: #887d6c;
+  --hairline-paper: #cec4b4;
 
   /* Surfaces, hairlines & viewer tokens */
   --surface-elevated: #101216;
@@ -39,11 +41,11 @@
 
   /* Focus & selection tokens (neutral cool archival light — no brass/gold) */
   --focus-ring-dark: #d6d4ce;
-  --focus-ring-light: #1a1816;
+  --focus-ring-light: #29251f;
   --focus-ring-width: 1px;
   --focus-ring-offset: 3px;
   --selection-dark-bg: rgba(230, 227, 220, 0.16);
-  --selection-light-bg: rgba(26, 24, 22, 0.12);
+  --selection-light-bg: rgba(41, 37, 31, 0.14);
 
   /* Fluid typography scale (desktop & mobile) */
   --text-threshold-title: clamp(1.125rem, 0.95rem + 0.9vw, 1.5rem);
@@ -92,6 +94,7 @@
   --color-light-table: var(--room-stillness-table);
   --color-paper: var(--room-correspondence);
   --color-paper-surface: var(--room-correspondence-surface);
+  --color-paper-elevated: var(--room-correspondence-elevated);
   --color-film: var(--room-voices-film);
   --color-cadenza: var(--room-cadenza);
   --color-chamber: var(--surface-elevated);
@@ -102,6 +105,9 @@
   --color-ink-muted: var(--ink-muted);
   --color-paper-ink: var(--ink-paper-primary);
   --color-paper-ink-secondary: var(--ink-paper-secondary);
+  --color-paper-ink-muted: var(--ink-paper-muted);
+  --color-paper-ink-dim: var(--ink-paper-dim);
+  --color-paper-hairline: var(--hairline-paper);
 
   --color-hairline: var(--hairline-dark);
   --color-hairline-strong: var(--hairline-dark-strong);
@@ -501,6 +507,132 @@
     transition-duration: 0ms;
   }
   .stillness-viewer-frame {
+    animation: none;
+  }
+}
+
+/* ==========================================================================
+   CORRESPONDENCE — THE WARM LITERARY ROOM (Archival Paper & Ink)
+   ========================================================================== */
+
+/*
+ * Gradual 1.5s ground transition from dark studio rooms (Void / Stillness)
+ * into warm natural paper light — zero page-turn or curtain gimmicks.
+ */
+@keyframes correspondenceGroundEmerge {
+  0% {
+    background-color: #0b0c0e;
+  }
+  26% {
+    background-color: #1f1c18;
+  }
+  100% {
+    background-color: var(--room-correspondence);
+  }
+}
+
+@keyframes correspondenceContentSettle {
+  0% {
+    opacity: 0;
+  }
+  30% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/*
+ * Match root canvas & scrollbar colour-scheme to the warm paper ground while
+ * inside Correspondence so rubber-band overscroll and bottom boundaries never
+ * reveal the dark void behind the paper.
+ */
+html:has(.correspondence-stage),
+body:has(.correspondence-stage) {
+  color-scheme: light;
+  background-color: var(--room-correspondence);
+}
+
+.correspondence-stage {
+  position: relative;
+  min-height: 100dvh;
+  color-scheme: light;
+  background-color: var(--room-correspondence);
+  background-image: radial-gradient(
+    ellipse 115% 70% at 50% 0%,
+    rgba(255, 252, 246, 0.42) 0%,
+    rgba(237, 230, 217, 0) 68%
+  );
+  color: var(--ink-paper-primary);
+  padding-bottom: max(6.5rem, calc(env(safe-area-inset-bottom) + 5.5rem));
+}
+
+.correspondence-ground-enter {
+  animation: correspondenceGroundEmerge 1500ms var(--ease-archive) both;
+}
+
+.correspondence-content-enter {
+  animation: correspondenceContentSettle 1500ms var(--ease-archive) both;
+}
+
+.correspondence-stage ::selection {
+  background-color: var(--selection-light-bg);
+  color: var(--ink-paper-primary);
+}
+
+.correspondence-stage :focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-light);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.correspondence-container {
+  padding-left: max(var(--space-page-x), env(safe-area-inset-left));
+  padding-right: max(var(--space-page-x), env(safe-area-inset-right));
+}
+
+/*
+ * Literary typesetting roles:
+ * - Original texts are static, rendered in full, and preserve exact UTF-8
+ *   characters and intentional line/stanza breaks via `white-space: pre-wrap`.
+ * - Devanagari strictly avoids artificial letter-spacing and justification so
+ *   shirorekha joins, conjuncts, and matras shape naturally at every viewport.
+ */
+.correspondence-verse-devanagari {
+  font-family: var(--font-devanagari);
+  font-size: var(--text-poetry-devanagari);
+  line-height: 2.18;
+  letter-spacing: 0;
+  font-feature-settings: "kern" 1, "liga" 1;
+  text-align: left;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.correspondence-verse-mixed {
+  font-family: var(--font-noto-devanagari), var(--font-eb-garamond), Georgia, serif;
+  font-size: clamp(1.1875rem, 1.08rem + 0.45vw, 1.4375rem);
+  line-height: 2.08;
+  letter-spacing: 0;
+  font-feature-settings: "kern" 1, "liga" 1;
+  text-align: left;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.correspondence-verse-latin {
+  font-family: var(--font-serif);
+  font-size: clamp(1.125rem, 1.05rem + 0.32vw, 1.34rem);
+  line-height: 1.9;
+  letter-spacing: 0.005em;
+  text-align: left;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .correspondence-ground-enter,
+  .correspondence-content-enter {
     animation: none;
   }
 }

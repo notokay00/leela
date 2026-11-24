@@ -5,7 +5,13 @@ import { useRouter } from "next/navigation";
 import { useAudio } from "@/components/audio/AudioProvider";
 import { cn } from "@/lib/cn";
 
-export function LockArchiveButton({ className }: { className?: string }) {
+export function LockArchiveButton({
+  className,
+  tone = "dark",
+}: {
+  className?: string;
+  tone?: "dark" | "light";
+}) {
   const router = useRouter();
   const { enterInSilence } = useAudio();
   const [locking, setLocking] = useState(false);
@@ -34,7 +40,10 @@ export function LockArchiveButton({ className }: { className?: string }) {
       onClick={handleLock}
       disabled={locking}
       className={cn(
-        "threshold-control cursor-pointer font-mono text-[11px] tracking-[0.2em] text-ink-dim uppercase hover:text-ink",
+        "threshold-control cursor-pointer font-mono text-[11px] tracking-[0.2em] uppercase",
+        tone === "light"
+          ? "text-paper-ink-secondary hover:text-paper-ink"
+          : "text-ink-dim hover:text-ink",
         locking && "cursor-wait opacity-50",
         className
       )}

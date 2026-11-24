@@ -1,13 +1,4 @@
-import type {
-  DocumentArtifact,
-  LetterArtifact,
-  PoetryArtifact,
-} from "@/content/types";
-
-export type CorrespondenceArtifact =
-  | PoetryArtifact
-  | LetterArtifact
-  | DocumentArtifact;
+import type { CorrespondenceArtefact } from "../../lib/correspondence/types.ts";
 
 /**
  * Verbatim preservation of the original Hindi/Urdu Devanagari poem
@@ -32,23 +23,30 @@ export const ORIGINAL_FOR_YOU_POEM_TEXT = `तेरी आखों में �
 बस इतनी सी दआ है, इतनी सी है आरज़ू,
 तेरे साथ जीना हो, तेरे साथ ही फ़ना हो जाना हो।`;
 
-export const CORRESPONDENCE_ARTIFACTS: readonly CorrespondenceArtifact[] = [
+/**
+ * Production Correspondence (`AU/II`) literary collection registry.
+ *
+ * Scalable data-driven registry designed for 25–50+ literary artefacts without
+ * layout or component rewrites. Every entry defaults to:
+ *   publishStatus: "withheld"
+ *   consentConfirmed: false
+ * and is independently filtered before entering the catalogue or reader routes.
+ */
+export const CORRESPONDENCE_ARTIFACTS: readonly CorrespondenceArtefact[] = [
   {
+    id: "correspondence-001",
     slug: "for-you-poem",
-    catalogId: "ARC-II-01",
-    movement: "correspondence",
-    kind: "poetry",
+    catalogNumber: "AU/II-001",
+    collectionOrder: 1,
+    type: "poem",
     title: "For You",
     language: "hi",
     script: "Devanagari",
     publishStatus: "withheld",
     consentConfirmed: false,
     pairedArtifactSlug: "leela-poem-film",
-    curatorialNote:
+    editorialNote:
       "Preserved verbatim from the earliest version of the archive.",
-    rawText: ORIGINAL_FOR_YOU_POEM_TEXT,
-    stanzas: ORIGINAL_FOR_YOU_POEM_TEXT.split("\n\n").map((stanza) =>
-      stanza.split("\n")
-    ),
+    originalText: ORIGINAL_FOR_YOU_POEM_TEXT,
   },
 ];

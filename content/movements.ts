@@ -35,7 +35,7 @@ export const ARCHIVE_MOVEMENTS: readonly ArchiveMovementEntry[] = [
     catalogueRef: "AU/II",
     description: "Poetry, letters, and pages kept in ink.",
     groundToken: "correspondence",
-    implemented: false,
+    implemented: true,
   },
   {
     slug: "voices-and-film",

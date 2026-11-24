@@ -34,11 +34,17 @@ describe("Milestone 2.2 Editorial Index structure and active-room rules", () => 
   });
 
   it("activates navigation links ONLY for implemented rooms and keeps unimplemented rooms inert", () => {
-    // Stillness (AU/I) is implemented in Milestone 2.3; remaining rooms stay inert
+    // Stillness (AU/I) and Correspondence (AU/II) are implemented; remaining rooms stay inert
     assert.equal(ARCHIVE_MOVEMENTS[0].implemented, true);
     assert.equal(getMovementHref(ARCHIVE_MOVEMENTS[0]), "/archive/stillness");
 
-    for (const movement of ARCHIVE_MOVEMENTS.slice(1)) {
+    assert.equal(ARCHIVE_MOVEMENTS[1].implemented, true);
+    assert.equal(
+      getMovementHref(ARCHIVE_MOVEMENTS[1]),
+      "/archive/correspondence"
+    );
+
+    for (const movement of ARCHIVE_MOVEMENTS.slice(2)) {
       assert.equal(movement.implemented, false);
       assert.equal(getMovementHref(movement), null);
     }

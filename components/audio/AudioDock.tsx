@@ -47,6 +47,9 @@ export function AudioDock() {
     return null;
   }
 
+  const isLightRoom =
+    pathname.startsWith("/archive/correspondence") ||
+    pathname.startsWith("/dev/correspondence-harness");
   const isPlaying = state.status === "playing";
   const isWaiting = state.status === "waiting";
   const isUnavailable = !state.available || state.status === "unavailable";
@@ -59,9 +62,17 @@ export function AudioDock() {
       ref={dockRef}
       aria-label="Archive audio dock"
       data-audio-status={state.status}
+      data-room-tone={isLightRoom ? "light" : "dark"}
       className="audio-dock-position fixed z-40"
     >
-      <div className="flex items-center gap-3 border border-hairline bg-void/90 px-3.5 py-2 text-ink backdrop-blur-sm">
+      <div
+        className={cn(
+          "flex items-center gap-3 border px-3.5 py-2 backdrop-blur-sm transition-colors duration-700",
+          isLightRoom
+            ? "border-paper-hairline bg-paper-elevated/92 text-paper-ink"
+            : "border-hairline bg-void/90 text-ink"
+        )}
+      >
         <button
           type="button"
           onClick={togglePlayback}
@@ -75,10 +86,13 @@ export function AudioDock() {
                 : "Play audio"
           }
           className={cn(
-            "flex h-6 w-6 shrink-0 items-center justify-center text-ink-secondary transition-colors",
+            "flex h-6 w-6 shrink-0 items-center justify-center transition-colors",
+            isLightRoom ? "text-paper-ink-secondary" : "text-ink-secondary",
             isUnavailable
               ? "cursor-not-allowed opacity-40"
-              : "cursor-pointer hover:text-ink"
+              : isLightRoom
+                ? "cursor-pointer hover:text-paper-ink"
+                : "cursor-pointer hover:text-ink"
           )}
         >
           {isPlaying ? (
@@ -106,18 +120,31 @@ export function AudioDock() {
         </button>
 
         <div className="flex min-w-0 items-baseline gap-2 font-mono text-[11px] tracking-[0.06em]">
-          <span className="max-w-[14rem] truncate text-ink-secondary sm:max-w-[18rem]">
+          <span
+            className={cn(
+              "max-w-[14rem] truncate sm:max-w-[18rem]",
+              isLightRoom ? "text-paper-ink-secondary" : "text-ink-secondary"
+            )}
+          >
             {state.cueTitle}
           </span>
           <span
             aria-live="polite"
-            className="shrink-0 text-[10px] tracking-[0.08em] text-ink-dim uppercase"
+            className={cn(
+              "shrink-0 text-[10px] tracking-[0.08em] uppercase",
+              isLightRoom ? "text-paper-ink-muted" : "text-ink-dim"
+            )}
           >
             {isWaiting ? "buffering" : statusLabel}
           </span>
         </div>
 
-        <div className="flex items-center gap-2 border-l border-hairline pl-2.5">
+        <div
+          className={cn(
+            "flex items-center gap-2 border-l pl-2.5",
+            isLightRoom ? "border-paper-hairline" : "border-hairline"
+          )}
+        >
           {volumeExpanded && (
             <div
               id={volumePanelId}
@@ -128,7 +155,12 @@ export function AudioDock() {
                 onClick={toggleMute}
                 aria-pressed={state.muted}
                 aria-label={state.muted ? "Unmute audio" : "Mute audio"}
-                className="cursor-pointer font-mono text-[10px] tracking-[0.08em] text-ink-dim uppercase hover:text-ink"
+                className={cn(
+                  "cursor-pointer font-mono text-[10px] tracking-[0.08em] uppercase",
+                  isLightRoom
+                    ? "text-paper-ink-muted hover:text-paper-ink"
+                    : "text-ink-dim hover:text-ink"
+                )}
               >
                 {state.muted ? "muted" : `${volumePercent}%`}
               </button>
@@ -141,7 +173,10 @@ export function AudioDock() {
                 onChange={(event) => setVolume(Number(event.target.value))}
                 aria-label="Audio volume"
                 aria-valuetext={`${volumePercent} percent`}
-                className="h-1 w-16 cursor-pointer accent-ink"
+                className={cn(
+                  "h-1 w-16 cursor-pointer",
+                  isLightRoom ? "accent-paper-ink" : "accent-ink"
+                )}
               />
             </div>
           )}
@@ -156,7 +191,12 @@ export function AudioDock() {
                 ? "Collapse volume control"
                 : "Expand volume control"
             }
-            className="flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center text-ink-secondary transition-colors hover:text-ink"
+            className={cn(
+              "flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center transition-colors",
+              isLightRoom
+                ? "text-paper-ink-secondary hover:text-paper-ink"
+                : "text-ink-secondary hover:text-ink"
+            )}
           >
             <svg
               width="12"
