@@ -204,8 +204,8 @@ export function StillnessRoom({
           </h1>
           <p className="mt-1.5 font-mono text-[10px] tracking-[0.18em] text-ink-dim uppercase">
             {photos.length === 0
-              ? "AU/I · 0 photographs"
-              : `AU/I · ${photos.length} ${photos.length === 1 ? "photograph" : "photographs"}`}
+              ? "STILLNESS · 0 photographs"
+              : `STILLNESS · ${photos.length} ${photos.length === 1 ? "photograph" : "photographs"}`}
           </p>
         </div>
 

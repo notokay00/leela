@@ -204,7 +204,9 @@ async function runActiveProductionStillnessSuite(
     });
     assert.equal(roomRes.status, 200);
     const roomHtml = await roomRes.text();
-    assert.ok(roomHtml.includes("AU/I · 15 photographs"));
+    assert.ok(roomHtml.includes("STILLNESS · MOVEMENT I"));
+    assert.ok(roomHtml.includes("STILLNESS · 15 photographs"));
+    assert.equal(roomHtml.includes("AU/I"), false);
     assert.equal(roomHtml.includes("No photographs are available here yet."), false);
     assert.equal(roomHtml.includes(mediaRoot), false);
     assert.equal(roomHtml.includes("TEST FIXTURES"), false);

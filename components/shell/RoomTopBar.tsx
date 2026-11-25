@@ -20,12 +20,12 @@ export function RoomTopBar({
   const isLight = tone === "light";
 
   return (
-    <header className="room-top-bar flex items-center justify-between">
-      <div className="flex items-center gap-5">
+    <header className="room-top-bar flex items-center justify-between gap-3">
+      <div className="flex min-w-0 items-center gap-3.5 sm:gap-5">
         <Link
           href="/archive"
           className={cn(
-            "threshold-control font-mono text-[11px] tracking-[0.22em] uppercase",
+            "threshold-control shrink-0 font-mono text-[11px] tracking-[0.22em] uppercase",
             isLight
               ? "text-paper-ink-secondary hover:text-paper-ink"
               : "text-ink-secondary hover:text-ink"
@@ -36,7 +36,7 @@ export function RoomTopBar({
         {catalogueRef && (
           <span
             className={cn(
-              "font-mono text-[11px] tracking-[0.16em]",
+              "truncate font-mono text-[10px] tracking-[0.14em] sm:text-[11px] sm:tracking-[0.16em]",
               isLight ? "text-paper-ink-secondary" : "text-ink-dim"
             )}
           >
@@ -44,7 +44,7 @@ export function RoomTopBar({
           </span>
         )}
       </div>
-      {rightSlot && <div className="flex items-center">{rightSlot}</div>}
+      {rightSlot && <div className="flex shrink-0 items-center">{rightSlot}</div>}
     </header>
   );
 }

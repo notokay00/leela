@@ -30,7 +30,7 @@ export interface SyntheticStillnessFixture extends StillnessClientPhoto {
 export const SYNTHETIC_STILLNESS_FIXTURES: readonly SyntheticStillnessFixture[] = [
   {
     id: "fixture-landscape-01",
-    catalogId: "TEST/01",
+    catalogId: "TEST 01",
     src: "/api/dev/stillness-fixture/fixture-landscape-01",
     width: 900,
     height: 600,
@@ -48,7 +48,7 @@ export const SYNTHETIC_STILLNESS_FIXTURES: readonly SyntheticStillnessFixture[] 
   },
   {
     id: "fixture-portrait-02",
-    catalogId: "TEST/02",
+    catalogId: "TEST 02",
     src: "/api/dev/stillness-fixture/fixture-portrait-02",
     width: 600,
     height: 900,
@@ -65,7 +65,7 @@ export const SYNTHETIC_STILLNESS_FIXTURES: readonly SyntheticStillnessFixture[] 
   },
   {
     id: "fixture-square-03",
-    catalogId: "TEST/03",
+    catalogId: "TEST 03",
     src: "/api/dev/stillness-fixture/fixture-square-03",
     width: 720,
     height: 720,
@@ -83,7 +83,7 @@ export const SYNTHETIC_STILLNESS_FIXTURES: readonly SyntheticStillnessFixture[] 
   },
   {
     id: "fixture-panoramic-04",
-    catalogId: "TEST/04",
+    catalogId: "TEST 04",
     src: "/api/dev/stillness-fixture/fixture-panoramic-04",
     width: 1200,
     height: 450,
@@ -103,7 +103,7 @@ export const SYNTHETIC_STILLNESS_FIXTURES: readonly SyntheticStillnessFixture[] 
   },
   {
     id: "fixture-portrait-05",
-    catalogId: "TEST/05",
+    catalogId: "TEST 05",
     src: "/api/dev/stillness-fixture/fixture-portrait-05",
     width: 560,
     height: 840,
@@ -121,7 +121,7 @@ export const SYNTHETIC_STILLNESS_FIXTURES: readonly SyntheticStillnessFixture[] 
   },
   {
     id: "fixture-landscape-06",
-    catalogId: "TEST/06",
+    catalogId: "TEST 06",
     src: "/api/dev/stillness-fixture/fixture-landscape-06",
     width: 960,
     height: 540,
@@ -137,7 +137,7 @@ export const SYNTHETIC_STILLNESS_FIXTURES: readonly SyntheticStillnessFixture[] 
   },
   {
     id: "fixture-square-07",
-    catalogId: "TEST/07",
+    catalogId: "TEST 07",
     src: "/api/dev/stillness-fixture/fixture-square-07",
     width: 680,
     height: 680,

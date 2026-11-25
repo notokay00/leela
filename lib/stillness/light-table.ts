@@ -35,11 +35,12 @@ export const MAX_PRINT_TILT_DEG = 3.2;
  * Per-photograph flashlight spotlight radius bounds (pixels).
  * Scaled from the shorter image dimension so portrait, landscape, square, and
  * wide panoramic prints all preserve a localized circular beam rather than
- * clipping into a rectangular strip.
+ * clipping into a rectangular strip (~25% larger illuminated area than the
+ * initial 55–115px calibration while preserving darkroom confinement).
  */
-export const MIN_FLASHLIGHT_RADIUS_PX = 55;
-export const DEFAULT_FLASHLIGHT_RADIUS_PX = 85;
-export const MAX_FLASHLIGHT_RADIUS_PX = 115;
+export const MIN_FLASHLIGHT_RADIUS_PX = 62;
+export const DEFAULT_FLASHLIGHT_RADIUS_PX = 95;
+export const MAX_FLASHLIGHT_RADIUS_PX = 129;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -47,7 +48,7 @@ function clamp(value: number, min: number, max: number): number {
 
 /**
  * Computes a localized circular flashlight radius from the shorter rendered
- * dimension of the photograph: clamp(min(width, height) * 0.45, 55, 115).
+ * dimension of the photograph: clamp(min(width, height) * 0.50, 62, 129).
  */
 export function computeFlashlightRadius(
   width: number,
@@ -59,7 +60,7 @@ export function computeFlashlightRadius(
 
   const shorterSide = Math.min(width, height);
   return Math.round(
-    clamp(shorterSide * 0.45, MIN_FLASHLIGHT_RADIUS_PX, MAX_FLASHLIGHT_RADIUS_PX)
+    clamp(shorterSide * 0.5, MIN_FLASHLIGHT_RADIUS_PX, MAX_FLASHLIGHT_RADIUS_PX)
   );
 }
 
@@ -67,17 +68,20 @@ export function computeFlashlightRadius(
  * Computes bounded local pixel coordinates and radius for the per-photograph
  * flashlight mask relative to the actual visible image rectangle.
  * Coordinates stay strictly constrained within [0, width] x [0, height].
+ * Supports both desktop hover (`interactionMode: "hover"`) and intentional
+ * mobile/tablet touch press/glide (`interactionMode: "touch"`).
  */
 export function computeFlashlightSpotlight(
   clientX: number,
   clientY: number,
   imageRect: RectBounds,
-  options?: { finePointer?: boolean }
+  options?: { finePointer?: boolean; interactionMode?: "hover" | "touch" }
 ): FlashlightSpotlight {
   const radius = computeFlashlightRadius(imageRect.width, imageRect.height);
+  const isTouchInteraction = options?.interactionMode === "touch";
 
   if (
-    options?.finePointer === false ||
+    (!isTouchInteraction && options?.finePointer === false) ||
     imageRect.width <= 0 ||
     imageRect.height <= 0
   ) {

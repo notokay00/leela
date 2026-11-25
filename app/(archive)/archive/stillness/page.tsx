@@ -33,7 +33,10 @@ export default async function StillnessPage() {
 
   return (
     <main className="stillness-stage text-ink">
-      <RoomTopBar catalogueRef="AU/I" rightSlot={<LockArchiveButton />} />
+      <RoomTopBar
+        catalogueRef="STILLNESS · MOVEMENT I"
+        rightSlot={<LockArchiveButton />}
+      />
       <div className="pt-4 sm:pt-8">
         <StillnessRoom photos={approvedPhotos} />
       </div>

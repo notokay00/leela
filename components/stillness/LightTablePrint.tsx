@@ -42,7 +42,12 @@ export function LightTablePrint({
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const frameRef = useRef<HTMLSpanElement | null>(null);
   const rafRef = useRef<number | null>(null);
-  const pendingPointerRef = useRef<{ x: number; y: number } | null>(null);
+  const pendingPointerRef = useRef<{
+    x: number;
+    y: number;
+    mode: "hover" | "touch";
+  } | null>(null);
+  const touchActiveRef = useRef(false);
   const [imageError, setImageError] = useState(false);
 
   // Apply justified pixel dimensions and image-scaled spotlight radius via CSSOM
@@ -69,7 +74,11 @@ export function LightTablePrint({
     };
   }, []);
 
-  function updateSpotlightAndTilt(clientX: number, clientY: number) {
+  function updateSpotlightAndTilt(
+    clientX: number,
+    clientY: number,
+    interactionMode: "hover" | "touch"
+  ) {
     const button = buttonRef.current;
     const frame = frameRef.current;
     if (!button || !frame) {
@@ -78,7 +87,8 @@ export function LightTablePrint({
 
     const frameRect = frame.getBoundingClientRect();
     const spotlight = computeFlashlightSpotlight(clientX, clientY, frameRect, {
-      finePointer: true,
+      finePointer: interactionMode === "hover",
+      interactionMode,
     });
 
     frame.style.setProperty("--spot-x", `${spotlight.x}px`);
@@ -86,7 +96,7 @@ export function LightTablePrint({
     frame.style.setProperty("--spot-radius", `${spotlight.radius}px`);
     frame.style.setProperty("--spot-opacity", spotlight.active ? "1" : "0");
 
-    if (enableTilt) {
+    if (interactionMode === "hover" && enableTilt) {
       const buttonRect = button.getBoundingClientRect();
       const { rotateX, rotateY } = computePrintTilt(
         clientX,
@@ -103,6 +113,7 @@ export function LightTablePrint({
   }
 
   function resetInteraction() {
+    touchActiveRef.current = false;
     if (rafRef.current !== null) {
       window.cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
@@ -122,25 +133,12 @@ export function LightTablePrint({
     }
   }
 
-  function handlePointerEnter(event: PointerEvent<HTMLButtonElement>) {
-    if (event.pointerType !== "mouse") {
-      return;
-    }
-
-    onActiveChange(photo.id);
-
-    if (enableFlashlight) {
-      // Position the beam immediately at the entry point so there is no jump.
-      updateSpotlightAndTilt(event.clientX, event.clientY);
-    }
-  }
-
-  function handlePointerMove(event: PointerEvent<HTMLButtonElement>) {
-    if (!enableFlashlight || event.pointerType !== "mouse") {
-      return;
-    }
-
-    pendingPointerRef.current = { x: event.clientX, y: event.clientY };
+  function scheduleSpotlightUpdate(
+    clientX: number,
+    clientY: number,
+    mode: "hover" | "touch"
+  ) {
+    pendingPointerRef.current = { x: clientX, y: clientY, mode };
 
     if (rafRef.current !== null) {
       return;
@@ -152,8 +150,57 @@ export function LightTablePrint({
       if (!point) {
         return;
       }
-      updateSpotlightAndTilt(point.x, point.y);
+      updateSpotlightAndTilt(point.x, point.y, point.mode);
     });
+  }
+
+  function handlePointerEnter(event: PointerEvent<HTMLButtonElement>) {
+    if (event.pointerType !== "mouse") {
+      return;
+    }
+
+    onActiveChange(photo.id);
+
+    if (enableFlashlight) {
+      // Position the beam immediately at the entry point so there is no jump.
+      updateSpotlightAndTilt(event.clientX, event.clientY, "hover");
+    }
+  }
+
+  function handlePointerDown(event: PointerEvent<HTMLButtonElement>) {
+    if (event.pointerType === "mouse") {
+      return;
+    }
+
+    // Illuminate a localized circular flashlight directly beneath touch/pen input
+    // without blocking vertical scroll or tap-to-open-viewer.
+    touchActiveRef.current = true;
+    onActiveChange(photo.id);
+    updateSpotlightAndTilt(event.clientX, event.clientY, "touch");
+  }
+
+  function handlePointerMove(event: PointerEvent<HTMLButtonElement>) {
+    if (event.pointerType === "mouse") {
+      if (!enableFlashlight) {
+        return;
+      }
+      scheduleSpotlightUpdate(event.clientX, event.clientY, "hover");
+      return;
+    }
+
+    if (touchActiveRef.current) {
+      scheduleSpotlightUpdate(event.clientX, event.clientY, "touch");
+    }
+  }
+
+  function handlePointerUpOrCancel(event: PointerEvent<HTMLButtonElement>) {
+    if (event.pointerType === "mouse") {
+      return;
+    }
+    resetInteraction();
+    if (isActive) {
+      onActiveChange(null);
+    }
   }
 
   function handlePointerLeave() {
@@ -181,7 +228,10 @@ export function LightTablePrint({
         aria-label={`Inspect photograph ${photo.catalogId}`}
         onClick={handleClick}
         onPointerEnter={handlePointerEnter}
+        onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUpOrCancel}
+        onPointerCancel={handlePointerUpOrCancel}
         onPointerLeave={handlePointerLeave}
         onFocus={() => onActiveChange(photo.id)}
         onBlur={() => {

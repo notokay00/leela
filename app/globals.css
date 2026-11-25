@@ -1231,7 +1231,7 @@
   filter: brightness(1.13) contrast(1.04);
   opacity: var(--spot-opacity, 0);
   -webkit-mask-image: radial-gradient(
-    circle var(--spot-radius, 85px) at var(--spot-x, 50%) var(--spot-y, 50%),
+    circle var(--spot-radius, 95px) at var(--spot-x, 50%) var(--spot-y, 50%),
     rgba(0, 0, 0, 1) 0%,
     rgba(0, 0, 0, 1) 28%,
     rgba(0, 0, 0, 0.88) 46%,
@@ -1240,7 +1240,7 @@
     rgba(0, 0, 0, 0) 100%
   );
   mask-image: radial-gradient(
-    circle var(--spot-radius, 85px) at var(--spot-x, 50%) var(--spot-y, 50%),
+    circle var(--spot-radius, 95px) at var(--spot-x, 50%) var(--spot-y, 50%),
     rgba(0, 0, 0, 1) 0%,
     rgba(0, 0, 0, 1) 28%,
     rgba(0, 0, 0, 0.88) 46%,

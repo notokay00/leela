@@ -226,23 +226,25 @@ describe("The Living Light Table 2.5D physics, bounds, and viewer swipe gestures
     assert.equal(detectViewerSwipe(15, 10), "none");
   });
 
-  it("computes bounded flashlight coordinates and shorter-dimension circular radii", () => {
+  it("computes bounded flashlight coordinates, ~25%-enlarged shorter-dimension circular radii, and touch interaction", () => {
     // Shorter-dimension scaling preserves circular character on wide panoramic images
-    // TEST/04-like panoramic (365x137) and TEST/01-like landscape (205x137) share the same height -> same circular radius (62px)
+    // Panoramic (365x137) and landscape (205x137) share the same height -> same circular radius (69px)
     const landscapeRadius = computeFlashlightRadius(205, 137);
     const panoramicRadius = computeFlashlightRadius(365, 137);
-    assert.equal(landscapeRadius, 62);
-    assert.equal(panoramicRadius, 62);
-    assert.ok(panoramicRadius < 137 / 2);
+    assert.equal(landscapeRadius, 69);
+    assert.equal(panoramicRadius, 69);
+    assert.ok(panoramicRadius < 365 / 4);
 
-    // Narrow portrait (91x137) clamps cleanly at MIN_FLASHLIGHT_RADIUS_PX (55px)
+    // Narrow portrait (91x137) clamps cleanly at MIN_FLASHLIGHT_RADIUS_PX (62px)
     const narrowPortraitRadius = computeFlashlightRadius(91, 137);
     assert.equal(narrowPortraitRadius, MIN_FLASHLIGHT_RADIUS_PX);
+    assert.equal(MIN_FLASHLIGHT_RADIUS_PX, 62);
 
-    // Larger prints scale up smoothly and cap at MAX_FLASHLIGHT_RADIUS_PX (115px)
+    // Larger prints scale up smoothly (+~25% illuminated area) and cap at MAX_FLASHLIGHT_RADIUS_PX (129px)
     const largeLandscapeRadius = computeFlashlightRadius(320, 214);
-    assert.equal(largeLandscapeRadius, 96);
+    assert.equal(largeLandscapeRadius, 107);
     assert.equal(computeFlashlightRadius(600, 400), MAX_FLASHLIGHT_RADIUS_PX);
+    assert.equal(MAX_FLASHLIGHT_RADIUS_PX, 129);
 
     const imageRect = { left: 120, top: 80, width: 320, height: 214 };
 
@@ -274,11 +276,22 @@ describe("The Living Light Table 2.5D physics, bounds, and viewer swipe gestures
     assert.equal(outside.y, 214);
     assert.equal(outside.active, false);
 
-    // Coarse / touch pointer never activates hover spotlight
-    const touch = computeFlashlightSpotlight(280, 187, imageRect, {
+    // Passive hover on coarse pointer stays inactive, while explicit touch interaction activates bounded beam
+    const passiveCoarse = computeFlashlightSpotlight(280, 187, imageRect, {
       finePointer: false,
     });
-    assert.equal(touch.active, false);
+    assert.equal(passiveCoarse.active, false);
+
+    const activeTouch = computeFlashlightSpotlight(280, 187, imageRect, {
+      finePointer: false,
+      interactionMode: "touch",
+    });
+    assert.deepEqual(activeTouch, {
+      x: 160,
+      y: 107,
+      radius: largeLandscapeRadius,
+      active: true,
+    });
   });
 });
 
@@ -324,7 +337,8 @@ describe("Stillness consent enforcement, privacy, and synthetic fixture isolatio
       const clientPhoto = approvedProduction[i];
 
       assert.equal(meta.id, `stillness-${padded}`);
-      assert.equal(meta.catalogId, `AU/I-${padded}`);
+      assert.equal(meta.catalogId, padded);
+      assert.equal(meta.catalogId.includes("/"), false);
       assert.equal(meta.assetKey, `arc-i-${padded}`);
       assert.equal(meta.publishStatus, "ready");
       assert.equal(meta.consentConfirmed, true);
@@ -332,7 +346,7 @@ describe("Stillness consent enforcement, privacy, and synthetic fixture isolatio
       assert.equal(meta.capturedAt, undefined);
       assert.ok(meta.width > 0 && meta.height > 0);
       assert.equal(clientPhoto.id, `stillness-${padded}`);
-      assert.equal(clientPhoto.catalogId, `AU/I-${padded}`);
+      assert.equal(clientPhoto.catalogId, padded);
       assert.equal(clientPhoto.src, `/api/media/arc-i-${padded}`);
       assert.equal(clientPhoto.width, meta.width);
       assert.equal(clientPhoto.height, meta.height);
@@ -430,9 +444,16 @@ describe("Stillness consent enforcement, privacy, and synthetic fixture isolatio
       assert.equal(resolveApprovedMediaAsset(fixture.id), null);
     }
 
-    // Viewer renders zero-padded 01 / 15 counter, Escape/Arrow navigation, and zero slideshow timers
+    // Viewer renders slash-free zero-padded "01 of 15" counter, Escape/Arrow navigation, and zero slideshow timers
     const viewerSrc = readFileSync("components/stillness/StillnessViewer.tsx", "utf8");
+    const roomSrc = readFileSync("components/stillness/StillnessRoom.tsx", "utf8");
+    const pageSrc = readFileSync("app/(archive)/archive/stillness/page.tsx", "utf8");
     assert.ok(viewerSrc.includes('padStart(2, "0")'));
+    assert.ok(viewerSrc.includes("of"));
+    assert.equal(viewerSrc.includes('padStart(2, "0")} /'), false);
+    assert.equal(roomSrc.includes("AU/I"), false);
+    assert.equal(pageSrc.includes("AU/I"), false);
+    assert.ok(pageSrc.includes("STILLNESS · MOVEMENT I"));
     assert.ok(viewerSrc.includes('"Escape"'));
     assert.ok(viewerSrc.includes('"ArrowLeft"'));
     assert.ok(viewerSrc.includes('"ArrowRight"'));

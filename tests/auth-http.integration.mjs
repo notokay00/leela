@@ -266,7 +266,9 @@ async function run() {
     });
     assert.equal(authStillness.status, 200);
     const stillnessHtml = await authStillness.text();
-    assert.ok(stillnessHtml.includes("AU/I · 15 photographs"));
+    assert.ok(stillnessHtml.includes("STILLNESS · MOVEMENT I"));
+    assert.ok(stillnessHtml.includes("STILLNESS · 15 photographs"));
+    assert.ok(!stillnessHtml.includes("AU/I"));
     assert.ok(stillnessHtml.includes("/api/media/arc-i-01"));
     assert.ok(stillnessHtml.includes("/api/media/arc-i-15"));
     assert.ok(!stillnessHtml.includes("TEST FIXTURES"));

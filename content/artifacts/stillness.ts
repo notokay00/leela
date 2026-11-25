@@ -54,7 +54,7 @@ export interface StillnessClientPhoto {
 export const STILLNESS_PHOTOS: readonly StillnessPhotoMetadata[] = [
   {
     id: "stillness-01",
-    catalogId: "AU/I-01",
+    catalogId: "01",
     assetKey: "arc-i-01",
     width: 722,
     height: 957,
@@ -64,7 +64,7 @@ export const STILLNESS_PHOTOS: readonly StillnessPhotoMetadata[] = [
   },
   {
     id: "stillness-02",
-    catalogId: "AU/I-02",
+    catalogId: "02",
     assetKey: "arc-i-02",
     width: 1920,
     height: 1080,
@@ -74,7 +74,7 @@ export const STILLNESS_PHOTOS: readonly StillnessPhotoMetadata[] = [
   },
   {
     id: "stillness-03",
-    catalogId: "AU/I-03",
+    catalogId: "03",
     assetKey: "arc-i-03",
     width: 1080,
     height: 608,
@@ -84,7 +84,7 @@ export const STILLNESS_PHOTOS: readonly StillnessPhotoMetadata[] = [
   },
   {
     id: "stillness-04",
-    catalogId: "AU/I-04",
+    catalogId: "04",
     assetKey: "arc-i-04",
     width: 1920,
     height: 1080,
@@ -94,7 +94,7 @@ export const STILLNESS_PHOTOS: readonly StillnessPhotoMetadata[] = [
   },
   {
     id: "stillness-05",
-    catalogId: "AU/I-05",
+    catalogId: "05",
     assetKey: "arc-i-05",
     width: 1920,
     height: 1080,
@@ -104,7 +104,7 @@ export const STILLNESS_PHOTOS: readonly StillnessPhotoMetadata[] = [
   },
   {
     id: "stillness-06",
-    catalogId: "AU/I-06",
+    catalogId: "06",
     assetKey: "arc-i-06",
     width: 1080,
     height: 1909,
@@ -114,7 +114,7 @@ export const STILLNESS_PHOTOS: readonly StillnessPhotoMetadata[] = [
   },
   {
     id: "stillness-07",
-    catalogId: "AU/I-07",
+    catalogId: "07",
     assetKey: "arc-i-07",
     width: 1290,
     height: 2796,
@@ -124,7 +124,7 @@ export const STILLNESS_PHOTOS: readonly StillnessPhotoMetadata[] = [
   },
   {
     id: "stillness-08",
-    catalogId: "AU/I-08",
+    catalogId: "08",
     assetKey: "arc-i-08",
     width: 941,
     height: 1024,
@@ -134,7 +134,7 @@ export const STILLNESS_PHOTOS: readonly StillnessPhotoMetadata[] = [
   },
   {
     id: "stillness-09",
-    catalogId: "AU/I-09",
+    catalogId: "09",
     assetKey: "arc-i-09",
     width: 1080,
     height: 1919,
@@ -144,7 +144,7 @@ export const STILLNESS_PHOTOS: readonly StillnessPhotoMetadata[] = [
   },
   {
     id: "stillness-10",
-    catalogId: "AU/I-10",
+    catalogId: "10",
     assetKey: "arc-i-10",
     width: 1290,
     height: 2796,
@@ -154,7 +154,7 @@ export const STILLNESS_PHOTOS: readonly StillnessPhotoMetadata[] = [
   },
   {
     id: "stillness-11",
-    catalogId: "AU/I-11",
+    catalogId: "11",
     assetKey: "arc-i-11",
     width: 1290,
     height: 2796,
@@ -164,7 +164,7 @@ export const STILLNESS_PHOTOS: readonly StillnessPhotoMetadata[] = [
   },
   {
     id: "stillness-12",
-    catalogId: "AU/I-12",
+    catalogId: "12",
     assetKey: "arc-i-12",
     width: 1599,
     height: 899,
@@ -174,7 +174,7 @@ export const STILLNESS_PHOTOS: readonly StillnessPhotoMetadata[] = [
   },
   {
     id: "stillness-13",
-    catalogId: "AU/I-13",
+    catalogId: "13",
     assetKey: "arc-i-13",
     width: 1080,
     height: 608,
@@ -184,7 +184,7 @@ export const STILLNESS_PHOTOS: readonly StillnessPhotoMetadata[] = [
   },
   {
     id: "stillness-14",
-    catalogId: "AU/I-14",
+    catalogId: "14",
     assetKey: "arc-i-14",
     width: 1920,
     height: 1080,
@@ -194,7 +194,7 @@ export const STILLNESS_PHOTOS: readonly StillnessPhotoMetadata[] = [
   },
   {
     id: "stillness-15",
-    catalogId: "AU/I-15",
+    catalogId: "15",
     assetKey: "arc-i-15",
     width: 787,
     height: 708,

@@ -146,19 +146,22 @@ export function StillnessViewer({
       ref={dialogRef}
       role="dialog"
       aria-modal="true"
-      aria-label={`Photograph viewer — ${photo.catalogId}`}
+      aria-label={`Photograph viewer — Stillness ${photo.catalogId}`}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       className="stillness-viewer-overlay fixed inset-0 z-50 flex flex-col justify-between text-ink"
     >
       {/* Top viewer bar */}
       <div className="flex items-center justify-between gap-4">
-        <div className="flex items-baseline gap-4 font-mono text-xs tracking-[0.14em] text-ink-secondary">
+        <div className="flex items-baseline gap-3 font-mono text-xs tracking-[0.14em] text-ink-secondary uppercase">
           <span aria-live="polite">
-            {String(currentIndex + 1).padStart(2, "0")} /{" "}
+            {String(currentIndex + 1).padStart(2, "0")} of{" "}
             {String(photos.length).padStart(2, "0")}
           </span>
-          <span className="text-ink-dim">{photo.catalogId}</span>
+          <span aria-hidden="true" className="text-ink-muted">
+            ·
+          </span>
+          <span className="text-ink-dim">Stillness</span>
           {photo.capturedAt && (
             <span className="hidden text-ink-dim sm:inline">
               {photo.capturedAt}
@@ -189,7 +192,7 @@ export function StillnessViewer({
         {imageError ? (
           <div className="flex h-64 w-full max-w-md flex-col items-center justify-center border border-hairline bg-chamber px-6 text-center">
             <p className="font-mono text-xs tracking-[0.18em] text-ink-dim uppercase">
-              {photo.catalogId}
+              Stillness · {photo.catalogId}
             </p>
             <p className="mt-3 font-sans text-sm text-ink-secondary">
               This photograph could not be loaded.
