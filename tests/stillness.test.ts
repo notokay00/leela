@@ -19,6 +19,7 @@ import {
   computePrintTilt,
   computeTableLightPosition,
   detectViewerSwipe,
+  FLASHLIGHT_VERTICAL_OFFSET_PX,
   MAX_FLASHLIGHT_RADIUS_PX,
   MAX_PRINT_TILT_DEG,
   MIN_FLASHLIGHT_RADIUS_PX,
@@ -247,15 +248,40 @@ describe("The Living Light Table 2.5D physics, bounds, and viewer swipe gestures
     assert.equal(MAX_FLASHLIGHT_RADIUS_PX, 129);
 
     const imageRect = { left: 120, top: 80, width: 320, height: 214 };
+    assert.equal(FLASHLIGHT_VERTICAL_OFFSET_PX, 65);
 
-    // Pointer at centre
+    // Pointer at centre (raw 160, 107) -> spotlight centre shifted 65px above pointer (160, 42)
     const center = computeFlashlightSpotlight(280, 187, imageRect, {
       finePointer: true,
     });
-    assert.equal(center.x, 160);
-    assert.equal(center.y, 107);
-    assert.equal(center.radius, largeLandscapeRadius);
-    assert.equal(center.active, true);
+    assert.deepEqual(center, {
+      x: 160,
+      y: 107 - FLASHLIGHT_VERTICAL_OFFSET_PX,
+      radius: largeLandscapeRadius,
+      active: true,
+    });
+
+    // Pointer at bottom edge (raw 160, 214) -> spotlight centre sits cleanly 65px above bottom (160, 149)
+    const bottomEdge = computeFlashlightSpotlight(280, 294, imageRect, {
+      finePointer: true,
+    });
+    assert.deepEqual(bottomEdge, {
+      x: 160,
+      y: 214 - FLASHLIGHT_VERTICAL_OFFSET_PX,
+      radius: largeLandscapeRadius,
+      active: true,
+    });
+
+    // Pointer inside upper 65px band stays active (raw hit-test) while spotlight centre clamps smoothly to y=0
+    const nearTop = computeFlashlightSpotlight(200, 110, imageRect, {
+      finePointer: true,
+    });
+    assert.deepEqual(nearTop, {
+      x: 80,
+      y: 0,
+      radius: largeLandscapeRadius,
+      active: true,
+    });
 
     // Pointer at exact top-left edge stays active and bounded at (0, 0)
     const edge = computeFlashlightSpotlight(120, 80, imageRect, {
@@ -268,7 +294,7 @@ describe("The Living Light Table 2.5D physics, bounds, and viewer swipe gestures
       active: true,
     });
 
-    // Pointer outside the visible image clamps coordinates and marks inactive
+    // Pointer outside the visible image (below/right or above top) marks inactive while keeping coordinates bounded
     const outside = computeFlashlightSpotlight(600, 400, imageRect, {
       finePointer: true,
     });
@@ -276,7 +302,14 @@ describe("The Living Light Table 2.5D physics, bounds, and viewer swipe gestures
     assert.equal(outside.y, 214);
     assert.equal(outside.active, false);
 
-    // Passive hover on coarse pointer stays inactive, while explicit touch interaction activates bounded beam
+    const outsideTop = computeFlashlightSpotlight(280, 79, imageRect, {
+      finePointer: true,
+    });
+    assert.equal(outsideTop.x, 160);
+    assert.equal(outsideTop.y, 0);
+    assert.equal(outsideTop.active, false);
+
+    // Passive hover on coarse pointer stays inactive, while explicit touch uses identical 65px upward offset
     const passiveCoarse = computeFlashlightSpotlight(280, 187, imageRect, {
       finePointer: false,
     });
@@ -286,12 +319,7 @@ describe("The Living Light Table 2.5D physics, bounds, and viewer swipe gestures
       finePointer: false,
       interactionMode: "touch",
     });
-    assert.deepEqual(activeTouch, {
-      x: 160,
-      y: 107,
-      radius: largeLandscapeRadius,
-      active: true,
-    });
+    assert.deepEqual(activeTouch, center);
   });
 });
 

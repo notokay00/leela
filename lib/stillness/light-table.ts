@@ -42,6 +42,13 @@ export const MIN_FLASHLIGHT_RADIUS_PX = 62;
 export const DEFAULT_FLASHLIGHT_RADIUS_PX = 95;
 export const MAX_FLASHLIGHT_RADIUS_PX = 129;
 
+/**
+ * Upward offset (CSS pixels) applied to the flashlight spotlight centre above
+ * the active pointer or fingertip so the illuminated circle stays clearly
+ * visible above the cursor/finger on both desktop and mobile.
+ */
+export const FLASHLIGHT_VERTICAL_OFFSET_PX = 65;
+
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
@@ -67,15 +74,23 @@ export function computeFlashlightRadius(
 /**
  * Computes bounded local pixel coordinates and radius for the per-photograph
  * flashlight mask relative to the actual visible image rectangle.
- * Coordinates stay strictly constrained within [0, width] x [0, height].
- * Supports both desktop hover (`interactionMode: "hover"`) and intentional
- * mobile/tablet touch press/glide (`interactionMode: "touch"`).
+ *
+ * - Hit-testing (`active`) uses the unmodified pointer/touch coordinates.
+ * - The illuminated spotlight centre is shifted upward by
+ *   `FLASHLIGHT_VERTICAL_OFFSET_PX` (65 CSS px) and clamped strictly within
+ *   `[0, width] x [0, height]` so near-edge illumination stays natural.
+ * - Shared identically by desktop hover (`interactionMode: "hover"`) and
+ *   mobile/tablet touch (`interactionMode: "touch"`).
  */
 export function computeFlashlightSpotlight(
   clientX: number,
   clientY: number,
   imageRect: RectBounds,
-  options?: { finePointer?: boolean; interactionMode?: "hover" | "touch" }
+  options?: {
+    finePointer?: boolean;
+    interactionMode?: "hover" | "touch";
+    verticalOffsetPx?: number;
+  }
 ): FlashlightSpotlight {
   const radius = computeFlashlightRadius(imageRect.width, imageRect.height);
   const isTouchInteraction = options?.interactionMode === "touch";
@@ -101,9 +116,12 @@ export function computeFlashlightSpotlight(
     rawY >= 0 &&
     rawY <= imageRect.height;
 
+  const verticalOffset =
+    options?.verticalOffsetPx ?? FLASHLIGHT_VERTICAL_OFFSET_PX;
+
   return {
     x: Math.round(clamp(rawX, 0, imageRect.width)),
-    y: Math.round(clamp(rawY, 0, imageRect.height)),
+    y: Math.round(clamp(rawY - verticalOffset, 0, imageRect.height)),
     radius,
     active: inside,
   };
