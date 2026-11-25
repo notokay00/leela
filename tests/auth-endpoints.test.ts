@@ -70,6 +70,49 @@ describe("Trusted origin and same-origin POST validation", () => {
     });
     assert.deepEqual([...origins], ["https://valid.example"]);
   });
+
+  it("trusts platform-provided VERCEL_BRANCH_URL strictly on Vercel Preview deployments", () => {
+    const previewEnv = {
+      NODE_ENV: "production",
+      VERCEL: "1",
+      VERCEL_ENV: "preview",
+      VERCEL_URL: "app-abc123-team.vercel.app",
+      VERCEL_BRANCH_URL: "app-git-archive-redesign-team.vercel.app",
+    };
+    assert.equal(
+      verifySameOrigin(
+        new Headers({ origin: "https://app-abc123-team.vercel.app" }),
+        previewEnv
+      ).ok,
+      true
+    );
+    assert.equal(
+      verifySameOrigin(
+        new Headers({
+          origin: "https://app-git-archive-redesign-team.vercel.app",
+        }),
+        previewEnv
+      ).ok,
+      true
+    );
+
+    const prodEnv = {
+      NODE_ENV: "production",
+      VERCEL: "1",
+      VERCEL_ENV: "production",
+      APP_ORIGIN: "https://app.vercel.app",
+      VERCEL_BRANCH_URL: "app-git-archive-redesign-team.vercel.app",
+    };
+    assert.equal(
+      verifySameOrigin(
+        new Headers({
+          origin: "https://app-git-archive-redesign-team.vercel.app",
+        }),
+        prodEnv
+      ).ok,
+      false
+    );
+  });
 });
 
 describe("Strict request-body schema and size validation", () => {

@@ -54,6 +54,20 @@ export function getTrustedOrigins(
     }
   }
 
+  // On Vercel Preview deployments only, also trust the platform-provided branch alias hostname.
+  if (
+    env.VERCEL === "1" &&
+    env.VERCEL_ENV === "preview" &&
+    env.VERCEL_BRANCH_URL
+  ) {
+    const normalized = normalizeOrigin(
+      `https://${env.VERCEL_BRANCH_URL.trim()}`
+    );
+    if (normalized) {
+      origins.add(normalized);
+    }
+  }
+
   // In non-production local dev only, default to localhost:3000 if APP_ORIGIN is unset.
   if (origins.size === 0 && env.NODE_ENV !== "production") {
     origins.add("http://localhost:3000");
