@@ -7,7 +7,7 @@ import os from "node:os";
 import path from "node:path";
 
 const PORT_PROD = 3097;
-const PORT_TRANSPORT = 3096;
+const PORT_NEGATIVE = 3096;
 
 const EXPECTED_15 = [
   { num: "01", width: 722, height: 957 },
@@ -147,7 +147,7 @@ async function createFallbackStillnessRoot() {
   return tmpRoot;
 }
 
-async function runProductionConsentEnforcementSuite(
+async function runActiveProductionStillnessSuite(
   passphrase,
   passphraseHash,
   sessionSecret,
@@ -173,7 +173,7 @@ async function runProductionConsentEnforcementSuite(
       throw new Error(`${err.message}\nServer stderr:\n${stderrBuf}`);
     });
 
-    // 1. Unauthenticated /archive/stillness redirects to / and leaks zero asset IDs
+    // 1. Unauthenticated /archive/stillness redirects to / and Threshold leaks zero asset IDs
     const unauthRoom = await fetch(`${origin}/archive/stillness`, {
       redirect: "manual",
     });
@@ -184,7 +184,7 @@ async function runProductionConsentEnforcementSuite(
     assert.equal(thresholdHtml.includes("/api/media/arc-i-"), false);
     assert.equal(thresholdHtml.includes("stillness-01.webp"), false);
 
-    // 2. Unauthenticated GET and HEAD across all 15 Stillness IDs strictly return 401
+    // 2. Unauthenticated GET and HEAD across all 15 active Stillness IDs strictly return 401
     for (const item of EXPECTED_15) {
       const id = `arc-i-${item.num}`;
       const unauthGet = await fetch(`${origin}/api/media/${id}`);
@@ -197,37 +197,118 @@ async function runProductionConsentEnforcementSuite(
       assert.equal(unauthHead.status, 401, `Expected 401 HEAD on ${id}`);
     }
 
-    // 3. Authenticated /archive/stillness withholds all 15 unconsented photos cleanly
+    // 3. Authenticated /archive/stillness renders all 15 photos in canonical order with count 15
     const cookie = await unlockSession(origin, passphrase);
     const roomRes = await fetch(`${origin}/archive/stillness`, {
       headers: { cookie },
     });
     assert.equal(roomRes.status, 200);
     const roomHtml = await roomRes.text();
-    assert.ok(roomHtml.includes("AU/I · 0 photographs"));
-    assert.ok(roomHtml.includes("No photographs are available here yet."));
-    assert.equal(roomHtml.includes("/api/media/arc-i-"), false);
+    assert.ok(roomHtml.includes("AU/I · 15 photographs"));
+    assert.equal(roomHtml.includes("No photographs are available here yet."), false);
     assert.equal(roomHtml.includes(mediaRoot), false);
+    assert.equal(roomHtml.includes("TEST FIXTURES"), false);
 
-    // 4. Authenticated GET & HEAD on all 15 unconsented arc-i-01..15 + traversal + withheld video return uniform 404
-    const baseline404 = await (
-      await fetch(`${origin}/api/media/arc-i-99`, { headers: { cookie } })
-    ).text();
+    let lastPos = -1;
+    for (const item of EXPECTED_15) {
+      const token = `/api/media/arc-i-${item.num}`;
+      const pos = roomHtml.indexOf(token);
+      assert.ok(pos > lastPos, `Missing or out-of-order Stillness URL ${token}`);
+      lastPos = pos;
+    }
 
+    // 4. Authenticated HEAD & full GET across ALL 15 active production IDs arc-i-01..15
+    const sizes = new Map();
     for (const item of EXPECTED_15) {
       const id = `arc-i-${item.num}`;
-      const getRes = await fetch(`${origin}/api/media/${id}`, {
-        headers: { cookie },
-      });
-      assert.equal(getRes.status, 404, `Unconsented ${id} must return 404`);
-      assert.equal(await getRes.text(), baseline404);
+      const diskPath = path.join(mediaRoot, "stillness", `stillness-${item.num}.webp`);
+      const diskBytes = readFileSync(diskPath);
+      const diskSha = createHash("sha256").update(diskBytes).digest("hex");
 
       const headRes = await fetch(`${origin}/api/media/${id}`, {
         method: "HEAD",
         headers: { cookie },
       });
-      assert.equal(headRes.status, 404, `Unconsented HEAD ${id} must return 404`);
+      assert.equal(headRes.status, 200, `HEAD failed for ${id}`);
+      assert.equal(headRes.headers.get("content-type"), "image/webp");
+      assert.equal(headRes.headers.get("accept-ranges"), "bytes");
+      assert.equal(
+        headRes.headers.get("cache-control"),
+        "private, no-store, max-age=0"
+      );
+      assert.equal(headRes.headers.get("x-content-type-options"), "nosniff");
+      assert.equal(
+        headRes.headers.get("x-robots-tag"),
+        "noindex, nofollow, noarchive, noimageindex"
+      );
+      assert.equal(headRes.headers.get("content-length"), String(diskBytes.length));
+      assert.equal((await headRes.arrayBuffer()).byteLength, 0);
+      sizes.set(id, diskBytes.length);
+
+      const getRes = await fetch(`${origin}/api/media/${id}`, {
+        headers: { cookie },
+      });
+      assert.equal(getRes.status, 200, `GET failed for ${id}`);
+      assert.equal(getRes.headers.get("content-type"), "image/webp");
+      assert.equal(
+        getRes.headers.get("cache-control"),
+        "private, no-store, max-age=0"
+      );
+      assert.equal(getRes.headers.get("x-content-type-options"), "nosniff");
+      const received = Buffer.from(await getRes.arrayBuffer());
+      assert.equal(received.length, diskBytes.length);
+      assert.equal(
+        createHash("sha256").update(received).digest("hex"),
+        diskSha,
+        `Byte/SHA mismatch for ${id}`
+      );
+
+      const parsed = parseVp8DimensionsAndChunks(received);
+      assert.equal(parsed.width, item.width, `Unexpected width for ${id}`);
+      assert.equal(parsed.height, item.height, `Unexpected height for ${id}`);
+      assert.equal(parsed.chunks.includes("EXIF"), false, `EXIF found in ${id}`);
+      assert.equal(parsed.chunks.includes("XMP "), false, `XMP found in ${id}`);
+      assert.equal(parsed.chunks.includes("ICCP"), false, `ICCP found in ${id}`);
     }
+
+    // 5. Verify 206 single-range, suffix-range, and 416 unsatisfiable range on rotated & upright active IDs
+    for (const id of ["arc-i-02", "arc-i-07", "arc-i-12", "arc-i-14"]) {
+      const totalSize = sizes.get(id);
+
+      const startRange = await fetch(`${origin}/api/media/${id}`, {
+        headers: { cookie, range: "bytes=0-1023" },
+      });
+      assert.equal(startRange.status, 206);
+      assert.equal(
+        startRange.headers.get("content-range"),
+        `bytes 0-1023/${totalSize}`
+      );
+      assert.equal(startRange.headers.get("content-length"), "1024");
+      const slice = Buffer.from(await startRange.arrayBuffer());
+      assert.equal(slice.subarray(0, 4).toString("ascii"), "RIFF");
+      assert.equal(slice.subarray(8, 12).toString("ascii"), "WEBP");
+
+      const suffixRange = await fetch(`${origin}/api/media/${id}`, {
+        headers: { cookie, range: "bytes=-256" },
+      });
+      assert.equal(suffixRange.status, 206);
+      assert.equal(
+        suffixRange.headers.get("content-range"),
+        `bytes ${totalSize - 256}-${totalSize - 1}/${totalSize}`
+      );
+      assert.equal((await suffixRange.arrayBuffer()).byteLength, 256);
+
+      const unsatRange = await fetch(`${origin}/api/media/${id}`, {
+        headers: { cookie, range: `bytes=${totalSize + 10}-` },
+      });
+      assert.equal(unsatRange.status, 416);
+      assert.equal(unsatRange.headers.get("content-range"), `bytes */${totalSize}`);
+    }
+
+    // 6. Invalid IDs, traversal attempts, and withheld personal film all return uniform 404
+    const baseline404 = await (
+      await fetch(`${origin}/api/media/arc-i-99`, { headers: { cookie } })
+    ).text();
 
     for (const badPath of [
       "/api/media/arc-i-00",
@@ -247,32 +328,41 @@ async function runProductionConsentEnforcementSuite(
   }
 }
 
-async function runAuthenticatedTransportVerificationSuite(
+async function runNegativeConsentEnforcementSuite(
   passphrase,
   passphraseHash,
   sessionSecret,
   mediaRoot
 ) {
-  const origin = `http://localhost:${PORT_TRANSPORT}`;
-  const manifestTmp = await mkdtemp(path.join(os.tmpdir(), "leela-stillness-manifest-"));
-  const manifestPath = path.join(manifestTmp, "stillness-transport-manifest.json");
+  const origin = `http://localhost:${PORT_NEGATIVE}`;
+  const manifestTmp = await mkdtemp(path.join(os.tmpdir(), "leela-stillness-neg-"));
+  const manifestPath = path.join(manifestTmp, "stillness-neg-manifest.json");
 
-  // Ephemeral test-only manifest binding isolated test IDs to the 15 staged WebP files so
-  // authenticated media route delivery, dimensions, EXIF stripping, and byte-range handling
-  // can be verified across all 15 files without enabling production consentConfirmed=true.
-  const manifest = EXPECTED_15.map((item) => ({
-    id: `test-stillness-${item.num}`,
-    storageRelativePath: `stillness/stillness-${item.num}.webp`,
-    mimeType: "image/webp",
-    downloadFilename: `test-stillness-${item.num}.webp`,
-    sensitivity: "high",
-    publishStatus: "ready",
-    consentConfirmed: true,
-    assetCategory: "personal-media",
-  }));
+  const manifest = [
+    {
+      id: "test-stillness-unconsented",
+      storageRelativePath: "stillness/stillness-01.webp",
+      mimeType: "image/webp",
+      downloadFilename: "test-stillness-unconsented.webp",
+      sensitivity: "high",
+      publishStatus: "ready",
+      consentConfirmed: false,
+      assetCategory: "personal-media",
+    },
+    {
+      id: "test-stillness-withheld",
+      storageRelativePath: "stillness/stillness-02.webp",
+      mimeType: "image/webp",
+      downloadFilename: "test-stillness-withheld.webp",
+      sensitivity: "high",
+      publishStatus: "withheld",
+      consentConfirmed: true,
+      assetCategory: "personal-media",
+    },
+  ];
   await writeFile(manifestPath, JSON.stringify(manifest), "utf8");
 
-  const server = spawnNextStart(PORT_TRANSPORT, {
+  const server = spawnNextStart(PORT_NEGATIVE, {
     APP_ORIGIN: origin,
     STORAGE_DRIVER: "local-fs",
     LOCAL_MEDIA_ROOT: mediaRoot,
@@ -292,109 +382,21 @@ async function runAuthenticatedTransportVerificationSuite(
       throw new Error(`${err.message}\nServer stderr:\n${stderrBuf}`);
     });
 
-    // 1. Unauthenticated transport test IDs still return 401
-    for (const item of EXPECTED_15) {
-      const unauth = await fetch(`${origin}/api/media/test-stillness-${item.num}`);
-      assert.equal(unauth.status, 401);
-    }
-
     const cookie = await unlockSession(origin, passphrase);
+    const baseline404 = await (
+      await fetch(`${origin}/api/media/nonexistent-neg-99`, { headers: { cookie } })
+    ).text();
 
-    // 2. Production IDs arc-i-01..15 remain strictly 404 even while test manifest is active
-    for (const id of ["arc-i-01", "arc-i-02", "arc-i-07", "arc-i-14", "arc-i-15"]) {
-      const prodRes = await fetch(`${origin}/api/media/${id}`, {
-        headers: { cookie },
-      });
-      assert.equal(prodRes.status, 404);
-    }
-
-    // 3. Verify all 15 staged WebP files load cleanly via authenticated HEAD + full GET with exact SHA-256,
-    //    exact post-rotation dimensions, image/webp MIME, private/no-store headers, and zero EXIF/XMP/ICCP
-    const sizes = new Map();
-    for (const item of EXPECTED_15) {
-      const testId = `test-stillness-${item.num}`;
-      const diskPath = path.join(mediaRoot, "stillness", `stillness-${item.num}.webp`);
-      const diskBytes = readFileSync(diskPath);
-      const diskSha = createHash("sha256").update(diskBytes).digest("hex");
-
-      const headRes = await fetch(`${origin}/api/media/${testId}`, {
-        method: "HEAD",
-        headers: { cookie },
-      });
-      assert.equal(headRes.status, 200, `HEAD failed for ${testId}`);
-      assert.equal(headRes.headers.get("content-type"), "image/webp");
-      assert.equal(headRes.headers.get("accept-ranges"), "bytes");
-      assert.equal(
-        headRes.headers.get("cache-control"),
-        "private, no-store, max-age=0"
-      );
-      assert.equal(headRes.headers.get("x-content-type-options"), "nosniff");
-      assert.equal(
-        headRes.headers.get("x-robots-tag"),
-        "noindex, nofollow, noarchive, noimageindex"
-      );
-      assert.equal(headRes.headers.get("content-length"), String(diskBytes.length));
-      assert.equal((await headRes.arrayBuffer()).byteLength, 0);
-      sizes.set(testId, diskBytes.length);
-
-      const getRes = await fetch(`${origin}/api/media/${testId}`, {
-        headers: { cookie },
-      });
-      assert.equal(getRes.status, 200, `GET failed for ${testId}`);
-      assert.equal(getRes.headers.get("content-type"), "image/webp");
-      const received = Buffer.from(await getRes.arrayBuffer());
-      assert.equal(received.length, diskBytes.length);
-      assert.equal(
-        createHash("sha256").update(received).digest("hex"),
-        diskSha,
-        `Byte/SHA mismatch for ${testId}`
-      );
-
-      const parsed = parseVp8DimensionsAndChunks(received);
-      assert.equal(parsed.width, item.width, `Unexpected width for ${testId}`);
-      assert.equal(parsed.height, item.height, `Unexpected height for ${testId}`);
-      assert.equal(parsed.chunks.includes("EXIF"), false, `EXIF found in ${testId}`);
-      assert.equal(parsed.chunks.includes("XMP "), false, `XMP found in ${testId}`);
-      assert.equal(parsed.chunks.includes("ICCP"), false, `ICCP found in ${testId}`);
-    }
-
-    // 4. Verify 206 single-range, suffix-range, and 416 unsatisfiable range on rotated & unrotated staged files
-    for (const testId of [
-      "test-stillness-02",
-      "test-stillness-07",
-      "test-stillness-12",
-      "test-stillness-14",
+    for (const id of [
+      "test-stillness-unconsented",
+      "test-stillness-withheld",
+      "arc-iii-01-film",
     ]) {
-      const totalSize = sizes.get(testId);
-
-      const startRange = await fetch(`${origin}/api/media/${testId}`, {
-        headers: { cookie, range: "bytes=0-1023" },
+      const res = await fetch(`${origin}/api/media/${id}`, {
+        headers: { cookie },
       });
-      assert.equal(startRange.status, 206);
-      assert.equal(
-        startRange.headers.get("content-range"),
-        `bytes 0-1023/${totalSize}`
-      );
-      assert.equal(startRange.headers.get("content-length"), "1024");
-      const slice = Buffer.from(await startRange.arrayBuffer());
-      assert.equal(slice.subarray(0, 4).toString("ascii"), "RIFF");
-      assert.equal(slice.subarray(8, 12).toString("ascii"), "WEBP");
-
-      const suffixRange = await fetch(`${origin}/api/media/${testId}`, {
-        headers: { cookie, range: "bytes=-256" },
-      });
-      assert.equal(suffixRange.status, 206);
-      assert.equal(
-        suffixRange.headers.get("content-range"),
-        `bytes ${totalSize - 256}-${totalSize - 1}/${totalSize}`
-      );
-      assert.equal((await suffixRange.arrayBuffer()).byteLength, 256);
-
-      const unsatRange = await fetch(`${origin}/api/media/${testId}`, {
-        headers: { cookie, range: `bytes=${totalSize + 10}-` },
-      });
-      assert.equal(unsatRange.status, 416);
-      assert.equal(unsatRange.headers.get("content-range"), `bytes */${totalSize}`);
+      assert.equal(res.status, 404, `Expected 404 for ${id}`);
+      assert.equal(await res.text(), baseline404);
     }
   } finally {
     server.kill();
@@ -416,13 +418,13 @@ async function run() {
   }
 
   try {
-    await runProductionConsentEnforcementSuite(
+    await runActiveProductionStillnessSuite(
       ephemeralPassphrase,
       passphraseHash,
       sessionSecret,
       mediaRoot
     );
-    await runAuthenticatedTransportVerificationSuite(
+    await runNegativeConsentEnforcementSuite(
       ephemeralPassphrase,
       passphraseHash,
       sessionSecret,
@@ -430,7 +432,7 @@ async function run() {
     );
 
     console.log(
-      "ALL LIVE HTTP STILLNESS CONSENT-ENFORCEMENT & 15-FILE AUTHENTICATED TRANSPORT SUITES PASSED."
+      "ALL LIVE HTTP STILLNESS 15-PHOTO ACTIVE DELIVERY & CONSENT-ENFORCEMENT SUITES PASSED."
     );
   } finally {
     if (tempRoot) {

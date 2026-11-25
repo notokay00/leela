@@ -283,10 +283,10 @@ describe("The Living Light Table 2.5D physics, bounds, and viewer swipe gestures
 });
 
 describe("Stillness consent enforcement, privacy, and synthetic fixture isolation", () => {
-  it("catalogues all 15 Stillness photographs with verified post-rotation dimensions while keeping unconsented photos strictly withheld", () => {
+  it("resolves all 15 consented Stillness photographs in order with verified post-rotation dimensions while enforcing strict negative consent gating", () => {
     assert.equal(STILLNESS_PHOTOS.length, 15);
 
-    // Every production Stillness photograph remains withheld until subject consent is established
+    // All 15 production Stillness photographs have explicitly confirmed personal-media consent
     const approvedProduction = selectApprovedStillnessPhotos(
       STILLNESS_PHOTOS,
       (key) => {
@@ -298,7 +298,7 @@ describe("Stillness consent enforcement, privacy, and synthetic fixture isolatio
         );
       }
     );
-    assert.equal(approvedProduction.length, 0);
+    assert.equal(approvedProduction.length, 15);
 
     // Verify orientation-corrected dimensions (02, 04, 05, 14 -> 1920x1080; 12 -> 1599x899; 07 preserved -> 1290x2796)
     const byId = new Map(STILLNESS_PHOTOS.map((p) => [p.id, p]));
@@ -321,15 +321,23 @@ describe("Stillness consent enforcement, privacy, and synthetic fixture isolatio
     for (let i = 0; i < STILLNESS_PHOTOS.length; i++) {
       const padded = String(i + 1).padStart(2, "0");
       const meta = STILLNESS_PHOTOS[i];
+      const clientPhoto = approvedProduction[i];
 
       assert.equal(meta.id, `stillness-${padded}`);
       assert.equal(meta.catalogId, `AU/I-${padded}`);
       assert.equal(meta.assetKey, `arc-i-${padded}`);
-      assert.equal(meta.publishStatus, "withheld");
-      assert.equal(meta.consentConfirmed, false);
+      assert.equal(meta.publishStatus, "ready");
+      assert.equal(meta.consentConfirmed, true);
       assert.equal(meta.caption, undefined);
       assert.equal(meta.capturedAt, undefined);
       assert.ok(meta.width > 0 && meta.height > 0);
+      assert.equal(clientPhoto.id, `stillness-${padded}`);
+      assert.equal(clientPhoto.catalogId, `AU/I-${padded}`);
+      assert.equal(clientPhoto.src, `/api/media/arc-i-${padded}`);
+      assert.equal(clientPhoto.width, meta.width);
+      assert.equal(clientPhoto.height, meta.height);
+      assert.equal(clientPhoto.caption, undefined);
+      assert.equal(clientPhoto.capturedAt, undefined);
       if (meta.height > meta.width) hasPortrait = true;
       if (meta.width > meta.height) hasLandscape = true;
     }
@@ -375,6 +383,16 @@ describe("Stillness consent enforcement, privacy, and synthetic fixture isolatio
         width: 800,
         height: 600,
         altText: "Music asset must never resolve as personal photograph",
+        publishStatus: "ready",
+        consentConfirmed: true,
+      },
+      {
+        id: "withheld-video-rejected",
+        catalogId: "AU/I-95",
+        assetKey: "arc-iii-01-film",
+        width: 800,
+        height: 600,
+        altText: "Unconsented film must never resolve in Stillness",
         publishStatus: "ready",
         consentConfirmed: true,
       },

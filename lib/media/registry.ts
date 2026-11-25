@@ -50,11 +50,10 @@ function createStillnessPhotoRecord(index: number): MediaAssetRecord {
     mimeType: "image/webp",
     downloadFilename: `arc-i-${padded}.webp`,
     sensitivity: "high",
-    publishStatus: "withheld",
-    // Personal-media consent is strictly separate from musical hosting rights and
-    // must remain false until explicit consent from every identifiable person
-    // depicted has been individually established.
-    consentConfirmed: false,
+    publishStatus: "ready",
+    // Explicit personal-media consent confirmed for all 15 Stillness photographs
+    // (strictly separate from musical hosting rights).
+    consentConfirmed: true,
     assetCategory: "personal-media",
   };
 }
@@ -82,9 +81,10 @@ function createApprovedSoundtrackRecord(
  * Authoritative server-only registry mapping opaque asset identifiers to
  * physical storage locations.
  *
- * - ALL personal archive material (Stillness photographs and Voices & Film)
- *   defaults strictly to `publishStatus: "withheld"` and `consentConfirmed: false`
- *   until explicit consent from every identifiable person depicted is established.
+ * - Personal archive material requires explicit `publishStatus: "ready"` and
+ *   `consentConfirmed: true` (all 15 Stillness photographs `arc-i-01`..`arc-i-15`
+ *   are consented and ready; Voices & Film `arc-iii-01-film` remains strictly
+ *   `publishStatus: "withheld"` and `consentConfirmed: false`).
  * - Approved music soundtracks use `assetCategory: "music-soundtrack"` and
  *   `hostingRightsConfirmed: true` while keeping personal `consentConfirmed: false`.
  */
