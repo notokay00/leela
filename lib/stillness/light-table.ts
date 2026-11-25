@@ -49,13 +49,59 @@ export const MAX_FLASHLIGHT_RADIUS_PX = 129;
  */
 export const FLASHLIGHT_VERTICAL_OFFSET_PX = 65;
 
+export type TouchFlashlightMode = "pending" | "flashlight" | "scroll";
+
 /**
- * Thresholds distinguishing a quick tap (opens the photograph viewer) from a
- * touch press-and-hold or glide gesture (explores with the flashlight and
- * dismisses cleanly on release without accidentally opening the viewer).
+ * Thresholds distinguishing:
+ * - Immediate vertical touch movement (< 180ms, >= 10px) -> native page scroll
+ * - Press-and-hold (>= 180ms within 10px) or clear horizontal scrub -> locked
+ *   flashlight exploration so moving the finger across the print stays lit
+ *   without browser pan/scroll cancellation (`pointercancel`)
+ * - Quick tap (< 350ms, < 14px) -> opens the photograph viewer cleanly
  */
+export const TOUCH_HOLD_LOCK_MS = 180;
+export const TOUCH_MOVE_SLOP_PX = 10;
 export const TOUCH_HOLD_SUPPRESS_CLICK_MS = 350;
 export const TOUCH_DRAG_SUPPRESS_CLICK_PX = 14;
+
+export function resolveTouchFlashlightMode(params: {
+  currentMode: TouchFlashlightMode;
+  elapsedMs: number;
+  deltaX: number;
+  deltaY: number;
+  priorMaxDistancePx: number;
+  touchCount: number;
+}): TouchFlashlightMode {
+  if (params.touchCount > 1) {
+    return "scroll";
+  }
+  if (params.currentMode !== "pending") {
+    return params.currentMode;
+  }
+
+  const absX = Math.abs(params.deltaX);
+  const absY = Math.abs(params.deltaY);
+  const distance = Math.hypot(absX, absY);
+
+  if (
+    params.elapsedMs >= TOUCH_HOLD_LOCK_MS &&
+    params.priorMaxDistancePx < TOUCH_MOVE_SLOP_PX
+  ) {
+    return "flashlight";
+  }
+
+  if (distance < TOUCH_MOVE_SLOP_PX) {
+    return "pending";
+  }
+
+  // Clearly horizontal exploration across a print on a vertically scrolling page
+  if (absX >= TOUCH_MOVE_SLOP_PX && absX > absY * 1.6) {
+    return "flashlight";
+  }
+
+  // Immediate vertical or diagonal swipe -> hand off cleanly to native page scroll
+  return "scroll";
+}
 
 export function shouldSuppressClickAfterTouchHold(
   durationMs: number,

@@ -23,9 +23,12 @@ import {
   MAX_FLASHLIGHT_RADIUS_PX,
   MAX_PRINT_TILT_DEG,
   MIN_FLASHLIGHT_RADIUS_PX,
+  resolveTouchFlashlightMode,
   shouldSuppressClickAfterTouchHold,
   TOUCH_DRAG_SUPPRESS_CLICK_PX,
+  TOUCH_HOLD_LOCK_MS,
   TOUCH_HOLD_SUPPRESS_CLICK_MS,
+  TOUCH_MOVE_SLOP_PX,
 } from "../lib/stillness/light-table.ts";
 import {
   renderSyntheticFixturePng,
@@ -575,6 +578,65 @@ describe("Stillness consent enforcement, privacy, and synthetic fixture isolatio
       true
     );
 
+    // Touch gesture mode resolution: immediate vertical swipe -> native scroll,
+    // press-and-hold (>= 180ms within slop) or horizontal scrub -> flashlight glide,
+    // multi-touch -> native pinch/scroll
+    assert.equal(
+      resolveTouchFlashlightMode({
+        currentMode: "pending",
+        elapsedMs: 40,
+        deltaX: 2,
+        deltaY: -18,
+        priorMaxDistancePx: 2,
+        touchCount: 1,
+      }),
+      "scroll"
+    );
+    assert.equal(
+      resolveTouchFlashlightMode({
+        currentMode: "pending",
+        elapsedMs: TOUCH_HOLD_LOCK_MS,
+        deltaX: 3,
+        deltaY: -16,
+        priorMaxDistancePx: TOUCH_MOVE_SLOP_PX - 1,
+        touchCount: 1,
+      }),
+      "flashlight"
+    );
+    assert.equal(
+      resolveTouchFlashlightMode({
+        currentMode: "pending",
+        elapsedMs: 60,
+        deltaX: 24,
+        deltaY: 4,
+        priorMaxDistancePx: 4,
+        touchCount: 1,
+      }),
+      "flashlight"
+    );
+    assert.equal(
+      resolveTouchFlashlightMode({
+        currentMode: "pending",
+        elapsedMs: 50,
+        deltaX: 3,
+        deltaY: 2,
+        priorMaxDistancePx: 2,
+        touchCount: 1,
+      }),
+      "pending"
+    );
+    assert.equal(
+      resolveTouchFlashlightMode({
+        currentMode: "flashlight",
+        elapsedMs: 400,
+        deltaX: 12,
+        deltaY: 12,
+        priorMaxDistancePx: 12,
+        touchCount: 2,
+      }),
+      "scroll"
+    );
+
     const css = readFileSync("app/globals.css", "utf8");
     for (const token of [
       ".light-table-print-item",
@@ -612,12 +674,22 @@ describe("Stillness consent enforcement, privacy, and synthetic fixture isolatio
     assert.ok(roomSrc.includes("onContextMenu={(event) => event.preventDefault()}"));
     assert.ok(roomSrc.includes("onDragStart={(event) => event.preventDefault()}"));
 
-    // Must not blindly call preventDefault() inside handlePointerDown
+    // Must not blindly call preventDefault() inside handlePointerDown or touchstart
     const pointerDownMatch = printSrc.match(
       /function handlePointerDown[\s\S]*?\n  \}/
     );
     assert.ok(pointerDownMatch, "Missing handlePointerDown");
     const pointerDownCode = pointerDownMatch[0].replace(/\/\/[^\n]*/g, "");
     assert.equal(pointerDownCode.includes("preventDefault"), false);
+    assert.ok(
+      printSrc.includes(
+        'button.addEventListener("touchstart", onTouchStart, { passive: true })'
+      )
+    );
+    assert.ok(
+      printSrc.includes(
+        'button.addEventListener("touchmove", onTouchMove, { passive: false })'
+      )
+    );
   });
 });

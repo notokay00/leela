@@ -6,15 +6,20 @@ import {
   useRef,
   useState,
   type DragEvent,
+  type KeyboardEvent,
   type MouseEvent,
   type PointerEvent,
 } from "react";
 import type { StillnessClientPhoto } from "@/content/artifacts/stillness";
 import {
+  TOUCH_HOLD_LOCK_MS,
+  TOUCH_MOVE_SLOP_PX,
   computeFlashlightRadius,
   computeFlashlightSpotlight,
   computePrintTilt,
+  resolveTouchFlashlightMode,
   shouldSuppressClickAfterTouchHold,
+  type TouchFlashlightMode,
 } from "@/lib/stillness/light-table";
 
 export interface LightTablePrintProps {
@@ -51,14 +56,31 @@ export function LightTablePrint({
     mode: "hover" | "touch";
   } | null>(null);
   const touchActiveRef = useRef(false);
+  const holdTimerRef = useRef<number | null>(null);
   const touchGestureRef = useRef<{
     startTime: number;
     startX: number;
     startY: number;
     maxDistance: number;
+    mode: TouchFlashlightMode;
   } | null>(null);
   const suppressClickUntilRef = useRef<number>(0);
+  const runtimeRef = useRef({
+    photoId: photo.id,
+    isActive,
+    enableTilt,
+    onActiveChange,
+  });
   const [imageError, setImageError] = useState(false);
+
+  useLayoutEffect(() => {
+    runtimeRef.current = {
+      photoId: photo.id,
+      isActive,
+      enableTilt,
+      onActiveChange,
+    };
+  });
 
   // Apply justified pixel dimensions and image-scaled spotlight radius via CSSOM
   // (no SSR style="" attribute — keeps strict nonce CSP clean).
@@ -76,13 +98,12 @@ export function LightTablePrint({
     }
   }, [width, height]);
 
-  useEffect(() => {
-    return () => {
-      if (rafRef.current !== null) {
-        window.cancelAnimationFrame(rafRef.current);
-      }
-    };
-  }, []);
+  function clearHoldTimer() {
+    if (holdTimerRef.current !== null) {
+      window.clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+  }
 
   function updateSpotlightAndTilt(
     clientX: number,
@@ -106,7 +127,7 @@ export function LightTablePrint({
     frame.style.setProperty("--spot-radius", `${spotlight.radius}px`);
     frame.style.setProperty("--spot-opacity", spotlight.active ? "1" : "0");
 
-    if (interactionMode === "hover" && enableTilt) {
+    if (interactionMode === "hover" && runtimeRef.current.enableTilt) {
       const buttonRect = button.getBoundingClientRect();
       const { rotateX, rotateY } = computePrintTilt(
         clientX,
@@ -124,6 +145,7 @@ export function LightTablePrint({
 
   function resetInteraction() {
     touchActiveRef.current = false;
+    clearHoldTimer();
     if (rafRef.current !== null) {
       window.cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
@@ -165,6 +187,157 @@ export function LightTablePrint({
     });
   }
 
+  function startTouchGesture(clientX: number, clientY: number) {
+    clearHoldTimer();
+    suppressClickUntilRef.current = 0;
+    touchActiveRef.current = true;
+    touchGestureRef.current = {
+      startTime: Date.now(),
+      startX: clientX,
+      startY: clientY,
+      maxDistance: 0,
+      mode: "pending",
+    };
+    holdTimerRef.current = window.setTimeout(() => {
+      holdTimerRef.current = null;
+      const gesture = touchGestureRef.current;
+      if (
+        gesture &&
+        gesture.mode === "pending" &&
+        gesture.maxDistance < TOUCH_MOVE_SLOP_PX
+      ) {
+        gesture.mode = "flashlight";
+      }
+    }, TOUCH_HOLD_LOCK_MS);
+    buttonRef.current?.setAttribute("data-touch-spot", "true");
+    runtimeRef.current.onActiveChange(runtimeRef.current.photoId);
+    updateSpotlightAndTilt(clientX, clientY, "touch");
+  }
+
+  function finishTouchGesture(isNormalEnd: boolean) {
+    clearHoldTimer();
+    const gesture = touchGestureRef.current;
+    touchGestureRef.current = null;
+    if (
+      isNormalEnd &&
+      gesture &&
+      gesture.mode !== "scroll" &&
+      shouldSuppressClickAfterTouchHold(
+        Date.now() - gesture.startTime,
+        gesture.maxDistance
+      )
+    ) {
+      suppressClickUntilRef.current = Date.now() + 450;
+    }
+    resetInteraction();
+    if (runtimeRef.current.isActive) {
+      runtimeRef.current.onActiveChange(null);
+    }
+  }
+
+  // Scoped native touch listeners on this print button only:
+  // - touchstart is passive (never calls preventDefault; quick taps & vertical scrolls stay native)
+  // - touchmove only calls preventDefault() once press-and-hold flashlight mode is locked,
+  //   preventing mobile browsers from aborting an active flashlight glide via pointercancel.
+  useEffect(() => {
+    const button = buttonRef.current;
+    if (!button) {
+      return;
+    }
+
+    const onTouchStart = (event: globalThis.TouchEvent) => {
+      if (event.touches.length > 1) {
+        if (touchGestureRef.current) {
+          touchGestureRef.current.mode = "scroll";
+        }
+        resetInteraction();
+        return;
+      }
+      const touch = event.touches[0];
+      if (!touch) {
+        return;
+      }
+      if (!touchGestureRef.current) {
+        startTouchGesture(touch.clientX, touch.clientY);
+      }
+    };
+
+    const onTouchMove = (event: globalThis.TouchEvent) => {
+      if (event.touches.length !== 1) {
+        if (touchGestureRef.current) {
+          touchGestureRef.current.mode = "scroll";
+        }
+        resetInteraction();
+        return;
+      }
+      const gesture = touchGestureRef.current;
+      const touch = event.touches[0];
+      if (!gesture || !touch) {
+        return;
+      }
+
+      const deltaX = touch.clientX - gesture.startX;
+      const deltaY = touch.clientY - gesture.startY;
+      const distance = Math.hypot(deltaX, deltaY);
+      const nextMode = resolveTouchFlashlightMode({
+        currentMode: gesture.mode,
+        elapsedMs: Date.now() - gesture.startTime,
+        deltaX,
+        deltaY,
+        priorMaxDistancePx: gesture.maxDistance,
+        touchCount: event.touches.length,
+      });
+
+      if (distance > gesture.maxDistance) {
+        gesture.maxDistance = distance;
+      }
+      gesture.mode = nextMode;
+
+      if (nextMode === "scroll") {
+        resetInteraction();
+        return;
+      }
+
+      if (nextMode === "flashlight") {
+        clearHoldTimer();
+        if (event.cancelable) {
+          event.preventDefault();
+        }
+      }
+
+      scheduleSpotlightUpdate(touch.clientX, touch.clientY, "touch");
+    };
+
+    const onTouchEnd = (event: globalThis.TouchEvent) => {
+      if (event.touches.length === 0) {
+        finishTouchGesture(true);
+      }
+    };
+
+    const onTouchCancel = () => {
+      finishTouchGesture(false);
+    };
+
+    button.addEventListener("touchstart", onTouchStart, { passive: true });
+    button.addEventListener("touchmove", onTouchMove, { passive: false });
+    button.addEventListener("touchend", onTouchEnd, { passive: true });
+    button.addEventListener("touchcancel", onTouchCancel, { passive: true });
+
+    return () => {
+      button.removeEventListener("touchstart", onTouchStart);
+      button.removeEventListener("touchmove", onTouchMove);
+      button.removeEventListener("touchend", onTouchEnd);
+      button.removeEventListener("touchcancel", onTouchCancel);
+      clearHoldTimer();
+      if (rafRef.current !== null) {
+        window.cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
+    // Listeners bind once per mounted print and read fresh callbacks via runtimeRef.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function handlePointerEnter(event: PointerEvent<HTMLButtonElement>) {
     if (event.pointerType !== "mouse") {
       return;
@@ -185,17 +358,7 @@ export function LightTablePrint({
 
     // Illuminate a localized circular flashlight directly above touch/pen input
     // without calling preventDefault() so vertical scrolling and quick taps remain native.
-    suppressClickUntilRef.current = 0;
-    touchActiveRef.current = true;
-    touchGestureRef.current = {
-      startTime: Date.now(),
-      startX: event.clientX,
-      startY: event.clientY,
-      maxDistance: 0,
-    };
-    buttonRef.current?.setAttribute("data-touch-spot", "true");
-    onActiveChange(photo.id);
-    updateSpotlightAndTilt(event.clientX, event.clientY, "touch");
+    startTouchGesture(event.clientX, event.clientY);
   }
 
   function handlePointerMove(event: PointerEvent<HTMLButtonElement>) {
@@ -210,12 +373,24 @@ export function LightTablePrint({
     if (touchActiveRef.current) {
       const gesture = touchGestureRef.current;
       if (gesture) {
-        const dist = Math.hypot(
-          event.clientX - gesture.startX,
-          event.clientY - gesture.startY
-        );
+        const deltaX = event.clientX - gesture.startX;
+        const deltaY = event.clientY - gesture.startY;
+        const dist = Math.hypot(deltaX, deltaY);
+        const nextMode = resolveTouchFlashlightMode({
+          currentMode: gesture.mode,
+          elapsedMs: Date.now() - gesture.startTime,
+          deltaX,
+          deltaY,
+          priorMaxDistancePx: gesture.maxDistance,
+          touchCount: 1,
+        });
         if (dist > gesture.maxDistance) {
           gesture.maxDistance = dist;
+        }
+        gesture.mode = nextMode;
+        if (nextMode === "scroll") {
+          resetInteraction();
+          return;
         }
       }
       scheduleSpotlightUpdate(event.clientX, event.clientY, "touch");
@@ -226,25 +401,14 @@ export function LightTablePrint({
     if (event.pointerType === "mouse") {
       return;
     }
-    const gesture = touchGestureRef.current;
-    touchGestureRef.current = null;
-    if (
-      event.type === "pointerup" &&
-      gesture &&
-      shouldSuppressClickAfterTouchHold(
-        Date.now() - gesture.startTime,
-        gesture.maxDistance
-      )
-    ) {
-      suppressClickUntilRef.current = Date.now() + 400;
-    }
-    resetInteraction();
-    if (isActive) {
-      onActiveChange(null);
-    }
+    finishTouchGesture(event.type === "pointerup");
   }
 
-  function handlePointerLeave() {
+  function handlePointerLeave(event: PointerEvent<HTMLButtonElement>) {
+    if (event.pointerType !== "mouse" && touchActiveRef.current) {
+      return;
+    }
+    clearHoldTimer();
     touchGestureRef.current = null;
     resetInteraction();
     if (isActive) {
@@ -258,6 +422,12 @@ export function LightTablePrint({
 
   function handleDragStart(event: DragEvent<HTMLElement>) {
     event.preventDefault();
+  }
+
+  function handleKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
+    if (event.key === "Enter" || event.key === " ") {
+      suppressClickUntilRef.current = 0;
+    }
   }
 
   function handleClick() {
@@ -287,6 +457,7 @@ export function LightTablePrint({
         data-selected={isSelected ? "true" : "false"}
         aria-label={`Inspect photograph ${photo.catalogId}`}
         onClick={handleClick}
+        onKeyDown={handleKeyDown}
         onContextMenu={handleContextMenu}
         onDragStart={handleDragStart}
         onPointerEnter={handlePointerEnter}
@@ -297,6 +468,8 @@ export function LightTablePrint({
         onPointerLeave={handlePointerLeave}
         onFocus={() => onActiveChange(photo.id)}
         onBlur={() => {
+          clearHoldTimer();
+          touchGestureRef.current = null;
           resetInteraction();
           if (isActive) {
             onActiveChange(null);
