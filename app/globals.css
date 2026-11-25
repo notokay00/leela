@@ -1278,7 +1278,8 @@
   outline-offset: 4px;
 }
 
-.light-table-print:focus-visible:not(:hover) .light-table-print-lit {
+.light-table-print:focus-visible:not(:hover):not([data-touch-spot="true"])
+  .light-table-print-lit {
   opacity: 1;
   -webkit-mask-image: radial-gradient(
     circle farthest-side at 50% 50%,

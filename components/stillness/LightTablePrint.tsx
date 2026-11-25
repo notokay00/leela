@@ -122,6 +122,7 @@ export function LightTablePrint({
 
     const button = buttonRef.current;
     if (button) {
+      button.removeAttribute("data-touch-spot");
       button.style.setProperty("--tilt-x", "0deg");
       button.style.setProperty("--tilt-y", "0deg");
     }
@@ -175,6 +176,7 @@ export function LightTablePrint({
     // Illuminate a localized circular flashlight directly beneath touch/pen input
     // without blocking vertical scroll or tap-to-open-viewer.
     touchActiveRef.current = true;
+    buttonRef.current?.setAttribute("data-touch-spot", "true");
     onActiveChange(photo.id);
     updateSpotlightAndTilt(event.clientX, event.clientY, "touch");
   }
