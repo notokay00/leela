@@ -42,7 +42,7 @@ const ALLOWED_MIME_TYPES = new Set<string>([
   "text/vtt",
 ]);
 
-function createApprovedStillnessPhotoRecord(index: number): MediaAssetRecord {
+function createStillnessPhotoRecord(index: number): MediaAssetRecord {
   const padded = String(index).padStart(2, "0");
   return {
     id: `arc-i-${padded}`,
@@ -50,9 +50,11 @@ function createApprovedStillnessPhotoRecord(index: number): MediaAssetRecord {
     mimeType: "image/webp",
     downloadFilename: `arc-i-${padded}.webp`,
     sensitivity: "high",
-    publishStatus: "ready",
-    // Personal-media consent is strictly separate from musical hosting rights.
-    consentConfirmed: true,
+    publishStatus: "withheld",
+    // Personal-media consent is strictly separate from musical hosting rights and
+    // must remain false until explicit consent from every identifiable person
+    // depicted has been individually established.
+    consentConfirmed: false,
     assetCategory: "personal-media",
   };
 }
@@ -80,11 +82,9 @@ function createApprovedSoundtrackRecord(
  * Authoritative server-only registry mapping opaque asset identifiers to
  * physical storage locations.
  *
- * - Unapproved personal archive material (e.g., Voices & Film) defaults strictly
- *   to `publishStatus: "withheld"` and `consentConfirmed: false`.
- * - Explicitly curated Stillness photographs use `assetCategory: "personal-media"`
- *   with `consentConfirmed: true` and `sensitivity: "high"` (private, no-store),
- *   without conflating personal consent with musical hosting rights.
+ * - ALL personal archive material (Stillness photographs and Voices & Film)
+ *   defaults strictly to `publishStatus: "withheld"` and `consentConfirmed: false`
+ *   until explicit consent from every identifiable person depicted is established.
  * - Approved music soundtracks use `assetCategory: "music-soundtrack"` and
  *   `hostingRightsConfirmed: true` while keeping personal `consentConfirmed: false`.
  */
@@ -100,7 +100,7 @@ const ARCHIVE_MEDIA_REGISTRY: readonly MediaAssetRecord[] = [
     assetCategory: "personal-media",
   },
   ...Array.from({ length: 15 }, (_, idx) =>
-    createApprovedStillnessPhotoRecord(idx + 1)
+    createStillnessPhotoRecord(idx + 1)
   ),
   createApprovedSoundtrackRecord(
     "arc-score-aranjuez",

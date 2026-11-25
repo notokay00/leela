@@ -46,9 +46,6 @@ describe("Consent defaults and strict opaque media allowlist", () => {
     const personalRecords = mediaRecords.filter(
       (record) => record.assetCategory !== "music-soundtrack"
     );
-    const withheldPersonalRecords = personalRecords.filter(
-      (record) => record.publishStatus !== "ready"
-    );
     const stillnessPhotoRecords = personalRecords.filter((record) =>
       record.id.startsWith("arc-i-")
     );
@@ -56,14 +53,15 @@ describe("Consent defaults and strict opaque media allowlist", () => {
       (record) => record.assetCategory === "music-soundtrack"
     );
 
-    // Unapproved personal media (Voices & Film video) stays strictly withheld & unconsented
-    assert.ok(withheldPersonalRecords.length >= 1);
-    for (const record of withheldPersonalRecords) {
+    // ALL personal media (Voices & Film video + all 15 Stillness photographs) remain strictly
+    // withheld & unconsented until explicit consent from every identifiable person depicted is confirmed.
+    assert.equal(personalRecords.length, 16);
+    for (const record of personalRecords) {
       assert.equal(record.publishStatus, "withheld");
       assert.equal(record.consentConfirmed, false);
+      assert.equal(record.hostingRightsConfirmed, undefined);
     }
 
-    // All 15 curated Stillness photographs use personal-media consent without conflating hostingRightsConfirmed
     assert.equal(stillnessPhotoRecords.length, 15);
     for (let i = 0; i < stillnessPhotoRecords.length; i++) {
       const record = stillnessPhotoRecords[i];
@@ -72,10 +70,10 @@ describe("Consent defaults and strict opaque media allowlist", () => {
       assert.equal(record.storageRelativePath, `stillness/stillness-${padded}.webp`);
       assert.equal(record.mimeType, "image/webp");
       assert.equal(record.sensitivity, "high");
-      assert.equal(record.publishStatus, "ready");
-      assert.equal(record.consentConfirmed, true);
       assert.equal(record.assetCategory, "personal-media");
-      assert.equal(record.hostingRightsConfirmed, undefined);
+      assert.equal(record.publishStatus, "withheld");
+      assert.equal(record.consentConfirmed, false);
+      assert.equal(resolveApprovedMediaAsset(record.id), null);
     }
 
     // All 24 approved soundtracks use music-soundtrack hosting rights while keeping personal consentConfirmed=false
@@ -95,12 +93,12 @@ describe("Consent defaults and strict opaque media allowlist", () => {
       }
     }
 
-    // Active production allowlist contains exclusively the 15 Stillness photographs + 24 approved soundtracks (zero withheld Voices & Film media)
+    // Active production allowlist contains exclusively the 24 approved soundtracks and ZERO unconsented personal assets
     const allowlist = buildMediaAllowlist(mediaRecords);
-    assert.equal(allowlist.size, 39);
+    assert.equal(allowlist.size, 24);
     assert.equal(resolveApprovedMediaAsset("arc-iii-01-film"), null);
-    assert.equal(resolveApprovedMediaAsset("arc-i-01")?.mimeType, "image/webp");
-    assert.equal(resolveApprovedMediaAsset("arc-i-15")?.mimeType, "image/webp");
+    assert.equal(resolveApprovedMediaAsset("arc-i-01"), null);
+    assert.equal(resolveApprovedMediaAsset("arc-i-15"), null);
     assert.equal(resolveApprovedMediaAsset("arc-score-aranjuez")?.mimeType, "audio/mpeg");
     assert.equal(resolveApprovedMediaAsset("arc-snd-poem-022")?.mimeType, "audio/mp4");
   });

@@ -43,8 +43,11 @@ export interface StillnessClientPhoto {
  * Authoritative production Stillness archive manifest (15 selected photographs,
  * ordered strictly `stillness-01` through `stillness-15`).
  *
- * - Intrinsic dimensions match the verified EXIF-stripped private WebP files
- *   staged under `stillness/stillness-01.webp`..`stillness-15.webp`.
+ * - Intrinsic dimensions match the verified, orientation-audited, EXIF-stripped
+ *   private WebP files staged under `stillness/stillness-01.webp`..`stillness-15.webp`.
+ * - Every photograph depicts identifiable person(s); all records remain strictly
+ *   `publishStatus: "withheld"` and `consentConfirmed: false` until required
+ *   consent from every identifiable person depicted has been established.
  * - No invented captions, dates, locations, or descriptions are added;
  *   `altText` provides a neutral accessible label only and is never rendered
  *   as a visible caption.
@@ -57,18 +60,18 @@ export const STILLNESS_PHOTOS: readonly StillnessPhotoMetadata[] = [
     width: 722,
     height: 957,
     altText: "Photograph 01 of 15 in Stillness",
-    publishStatus: "ready",
-    consentConfirmed: true,
+    publishStatus: "withheld",
+    consentConfirmed: false,
   },
   {
     id: "stillness-02",
     catalogId: "AU/I-02",
     assetKey: "arc-i-02",
-    width: 1080,
-    height: 1920,
+    width: 1920,
+    height: 1080,
     altText: "Photograph 02 of 15 in Stillness",
-    publishStatus: "ready",
-    consentConfirmed: true,
+    publishStatus: "withheld",
+    consentConfirmed: false,
   },
   {
     id: "stillness-03",
@@ -77,28 +80,28 @@ export const STILLNESS_PHOTOS: readonly StillnessPhotoMetadata[] = [
     width: 1080,
     height: 608,
     altText: "Photograph 03 of 15 in Stillness",
-    publishStatus: "ready",
-    consentConfirmed: true,
+    publishStatus: "withheld",
+    consentConfirmed: false,
   },
   {
     id: "stillness-04",
     catalogId: "AU/I-04",
     assetKey: "arc-i-04",
-    width: 1080,
-    height: 1920,
+    width: 1920,
+    height: 1080,
     altText: "Photograph 04 of 15 in Stillness",
-    publishStatus: "ready",
-    consentConfirmed: true,
+    publishStatus: "withheld",
+    consentConfirmed: false,
   },
   {
     id: "stillness-05",
     catalogId: "AU/I-05",
     assetKey: "arc-i-05",
-    width: 1080,
-    height: 1920,
+    width: 1920,
+    height: 1080,
     altText: "Photograph 05 of 15 in Stillness",
-    publishStatus: "ready",
-    consentConfirmed: true,
+    publishStatus: "withheld",
+    consentConfirmed: false,
   },
   {
     id: "stillness-06",
@@ -107,8 +110,8 @@ export const STILLNESS_PHOTOS: readonly StillnessPhotoMetadata[] = [
     width: 1080,
     height: 1909,
     altText: "Photograph 06 of 15 in Stillness",
-    publishStatus: "ready",
-    consentConfirmed: true,
+    publishStatus: "withheld",
+    consentConfirmed: false,
   },
   {
     id: "stillness-07",
@@ -117,8 +120,8 @@ export const STILLNESS_PHOTOS: readonly StillnessPhotoMetadata[] = [
     width: 1290,
     height: 2796,
     altText: "Photograph 07 of 15 in Stillness",
-    publishStatus: "ready",
-    consentConfirmed: true,
+    publishStatus: "withheld",
+    consentConfirmed: false,
   },
   {
     id: "stillness-08",
@@ -127,8 +130,8 @@ export const STILLNESS_PHOTOS: readonly StillnessPhotoMetadata[] = [
     width: 941,
     height: 1024,
     altText: "Photograph 08 of 15 in Stillness",
-    publishStatus: "ready",
-    consentConfirmed: true,
+    publishStatus: "withheld",
+    consentConfirmed: false,
   },
   {
     id: "stillness-09",
@@ -137,8 +140,8 @@ export const STILLNESS_PHOTOS: readonly StillnessPhotoMetadata[] = [
     width: 1080,
     height: 1919,
     altText: "Photograph 09 of 15 in Stillness",
-    publishStatus: "ready",
-    consentConfirmed: true,
+    publishStatus: "withheld",
+    consentConfirmed: false,
   },
   {
     id: "stillness-10",
@@ -147,8 +150,8 @@ export const STILLNESS_PHOTOS: readonly StillnessPhotoMetadata[] = [
     width: 1290,
     height: 2796,
     altText: "Photograph 10 of 15 in Stillness",
-    publishStatus: "ready",
-    consentConfirmed: true,
+    publishStatus: "withheld",
+    consentConfirmed: false,
   },
   {
     id: "stillness-11",
@@ -157,18 +160,18 @@ export const STILLNESS_PHOTOS: readonly StillnessPhotoMetadata[] = [
     width: 1290,
     height: 2796,
     altText: "Photograph 11 of 15 in Stillness",
-    publishStatus: "ready",
-    consentConfirmed: true,
+    publishStatus: "withheld",
+    consentConfirmed: false,
   },
   {
     id: "stillness-12",
     catalogId: "AU/I-12",
     assetKey: "arc-i-12",
-    width: 899,
-    height: 1599,
+    width: 1599,
+    height: 899,
     altText: "Photograph 12 of 15 in Stillness",
-    publishStatus: "ready",
-    consentConfirmed: true,
+    publishStatus: "withheld",
+    consentConfirmed: false,
   },
   {
     id: "stillness-13",
@@ -177,18 +180,18 @@ export const STILLNESS_PHOTOS: readonly StillnessPhotoMetadata[] = [
     width: 1080,
     height: 608,
     altText: "Photograph 13 of 15 in Stillness",
-    publishStatus: "ready",
-    consentConfirmed: true,
+    publishStatus: "withheld",
+    consentConfirmed: false,
   },
   {
     id: "stillness-14",
     catalogId: "AU/I-14",
     assetKey: "arc-i-14",
-    width: 1080,
-    height: 1920,
+    width: 1920,
+    height: 1080,
     altText: "Photograph 14 of 15 in Stillness",
-    publishStatus: "ready",
-    consentConfirmed: true,
+    publishStatus: "withheld",
+    consentConfirmed: false,
   },
   {
     id: "stillness-15",
@@ -197,8 +200,8 @@ export const STILLNESS_PHOTOS: readonly StillnessPhotoMetadata[] = [
     width: 787,
     height: 708,
     altText: "Photograph 15 of 15 in Stillness",
-    publishStatus: "ready",
-    consentConfirmed: true,
+    publishStatus: "withheld",
+    consentConfirmed: false,
   },
 ];
 

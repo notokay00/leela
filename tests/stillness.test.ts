@@ -283,9 +283,10 @@ describe("The Living Light Table 2.5D physics, bounds, and viewer swipe gestures
 });
 
 describe("Stillness consent enforcement, privacy, and synthetic fixture isolation", () => {
-  it("registers all 15 curated Stillness photographs in order without invented metadata and excludes withheld/unconsented/unallowlisted assets", () => {
+  it("catalogues all 15 Stillness photographs with verified post-rotation dimensions while keeping unconsented photos strictly withheld", () => {
     assert.equal(STILLNESS_PHOTOS.length, 15);
 
+    // Every production Stillness photograph remains withheld until subject consent is established
     const approvedProduction = selectApprovedStillnessPhotos(
       STILLNESS_PHOTOS,
       (key) => {
@@ -297,34 +298,45 @@ describe("Stillness consent enforcement, privacy, and synthetic fixture isolatio
         );
       }
     );
-    assert.equal(approvedProduction.length, 15);
+    assert.equal(approvedProduction.length, 0);
+
+    // Verify orientation-corrected dimensions (02, 04, 05, 14 -> 1920x1080; 12 -> 1599x899; 07 preserved -> 1290x2796)
+    const byId = new Map(STILLNESS_PHOTOS.map((p) => [p.id, p]));
+    for (const rotated1080 of [
+      "stillness-02",
+      "stillness-04",
+      "stillness-05",
+      "stillness-14",
+    ]) {
+      assert.equal(byId.get(rotated1080)?.width, 1920);
+      assert.equal(byId.get(rotated1080)?.height, 1080);
+    }
+    assert.equal(byId.get("stillness-12")?.width, 1599);
+    assert.equal(byId.get("stillness-12")?.height, 899);
+    assert.equal(byId.get("stillness-07")?.width, 1290);
+    assert.equal(byId.get("stillness-07")?.height, 2796);
 
     let hasPortrait = false;
     let hasLandscape = false;
     for (let i = 0; i < STILLNESS_PHOTOS.length; i++) {
       const padded = String(i + 1).padStart(2, "0");
       const meta = STILLNESS_PHOTOS[i];
-      const dto = approvedProduction[i];
 
       assert.equal(meta.id, `stillness-${padded}`);
       assert.equal(meta.catalogId, `AU/I-${padded}`);
       assert.equal(meta.assetKey, `arc-i-${padded}`);
-      assert.equal(meta.publishStatus, "ready");
-      assert.equal(meta.consentConfirmed, true);
+      assert.equal(meta.publishStatus, "withheld");
+      assert.equal(meta.consentConfirmed, false);
       assert.equal(meta.caption, undefined);
       assert.equal(meta.capturedAt, undefined);
       assert.ok(meta.width > 0 && meta.height > 0);
       if (meta.height > meta.width) hasPortrait = true;
       if (meta.width > meta.height) hasLandscape = true;
-
-      assert.equal(dto.src, `/api/media/arc-i-${padded}`);
-      assert.equal(dto.caption, undefined);
-      assert.equal(dto.capturedAt, undefined);
     }
     assert.equal(hasPortrait, true);
     assert.equal(hasLandscape, true);
 
-    // Negative consent & allowlist gating must still block withheld, unconsented, unallowlisted, and music-category assets
+    // Negative consent & allowlist gating must block withheld, unconsented, unallowlisted, and music-category assets
     const mixedConsent: StillnessPhotoMetadata[] = [
       {
         id: "withheld-1",
@@ -380,6 +392,20 @@ describe("Stillness consent enforcement, privacy, and synthetic fixture isolatio
       }
     );
     assert.equal(approvedMixed.length, 0);
+
+    // Explicitly approved mock record resolves cleanly to /api/media/<opaque-id>
+    const mockApproved = selectApprovedStillnessPhotos(
+      [
+        {
+          ...STILLNESS_PHOTOS[0],
+          publishStatus: "ready",
+          consentConfirmed: true,
+        },
+      ],
+      (key) => key === "arc-i-01"
+    );
+    assert.equal(mockApproved.length, 1);
+    assert.equal(mockApproved[0].src, "/api/media/arc-i-01");
 
     // Ensure synthetic fixtures are NEVER present in the production media allowlist
     for (const fixture of SYNTHETIC_STILLNESS_FIXTURES) {
