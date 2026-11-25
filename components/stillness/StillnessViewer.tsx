@@ -206,6 +206,7 @@ export function StillnessViewer({
             width={photo.width}
             height={photo.height}
             decoding="async"
+            draggable={false}
             onError={() => setFailedSrc(photo.src)}
             className="max-h-[calc(100dvh-12rem)] max-w-full object-contain shadow-[0_24px_64px_rgba(0,0,0,0.85)] select-none"
           />

@@ -49,6 +49,24 @@ export const MAX_FLASHLIGHT_RADIUS_PX = 129;
  */
 export const FLASHLIGHT_VERTICAL_OFFSET_PX = 65;
 
+/**
+ * Thresholds distinguishing a quick tap (opens the photograph viewer) from a
+ * touch press-and-hold or glide gesture (explores with the flashlight and
+ * dismisses cleanly on release without accidentally opening the viewer).
+ */
+export const TOUCH_HOLD_SUPPRESS_CLICK_MS = 350;
+export const TOUCH_DRAG_SUPPRESS_CLICK_PX = 14;
+
+export function shouldSuppressClickAfterTouchHold(
+  durationMs: number,
+  maxDistancePx: number
+): boolean {
+  return (
+    durationMs >= TOUCH_HOLD_SUPPRESS_CLICK_MS ||
+    maxDistancePx >= TOUCH_DRAG_SUPPRESS_CLICK_PX
+  );
+}
+
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }

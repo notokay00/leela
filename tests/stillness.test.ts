@@ -23,6 +23,9 @@ import {
   MAX_FLASHLIGHT_RADIUS_PX,
   MAX_PRINT_TILT_DEG,
   MIN_FLASHLIGHT_RADIUS_PX,
+  shouldSuppressClickAfterTouchHold,
+  TOUCH_DRAG_SUPPRESS_CLICK_PX,
+  TOUCH_HOLD_SUPPRESS_CLICK_MS,
 } from "../lib/stillness/light-table.ts";
 import {
   renderSyntheticFixturePng,
@@ -557,5 +560,64 @@ describe("Stillness consent enforcement, privacy, and synthetic fixture isolatio
     assert.ok(css.includes(".viewer-scroll-lock"));
     // No white overlay sheen washing out original colours
     assert.ok(!css.includes(".light-table-print-sheen"));
+  });
+
+  it("protects Stillness light-table prints and labels from mobile long-press selection/callout/drag without blocking scrolling or other sections", () => {
+    // Quick taps open the viewer; touch holds and glides dismiss cleanly on release
+    assert.equal(shouldSuppressClickAfterTouchHold(80, 2), false);
+    assert.equal(shouldSuppressClickAfterTouchHold(180, 8), false);
+    assert.equal(
+      shouldSuppressClickAfterTouchHold(TOUCH_HOLD_SUPPRESS_CLICK_MS, 0),
+      true
+    );
+    assert.equal(
+      shouldSuppressClickAfterTouchHold(200, TOUCH_DRAG_SUPPRESS_CLICK_PX),
+      true
+    );
+
+    const css = readFileSync("app/globals.css", "utf8");
+    for (const token of [
+      ".light-table-print-item",
+      ".light-table-print-label",
+      "-webkit-user-select: none;",
+      "user-select: none;",
+      "-webkit-touch-callout: none;",
+      "-webkit-user-drag: none;",
+      "-webkit-tap-highlight-color: transparent;",
+    ]) {
+      assert.ok(css.includes(token), `Missing expected CSS token: ${token}`);
+    }
+    // Must not disable scrolling via touch-action: none
+    assert.equal(css.includes("touch-action: none"), false);
+
+    // Must not apply global user-select: none to body, Correspondence, or Cadenza
+    const bodyBlock = css.match(/\bbody\s*\{[^}]*\}/)?.[0] ?? "";
+    assert.equal(bodyBlock.includes("user-select: none"), false);
+    assert.equal(
+      /\.correspondence-[^{]*\{[^}]*user-select:\s*none/.test(css),
+      false
+    );
+    assert.equal(
+      /\.cadenza-[^{]*\{[^}]*user-select:\s*none/.test(css),
+      false
+    );
+
+    const printSrc = readFileSync("components/stillness/LightTablePrint.tsx", "utf8");
+    const roomSrc = readFileSync("components/stillness/StillnessRoom.tsx", "utf8");
+    assert.ok(printSrc.includes("light-table-print-item"));
+    assert.ok(printSrc.includes("light-table-print-label"));
+    assert.ok(printSrc.includes("draggable={false}"));
+    assert.ok(printSrc.includes("onContextMenu={handleContextMenu}"));
+    assert.ok(printSrc.includes("onDragStart={handleDragStart}"));
+    assert.ok(roomSrc.includes("onContextMenu={(event) => event.preventDefault()}"));
+    assert.ok(roomSrc.includes("onDragStart={(event) => event.preventDefault()}"));
+
+    // Must not blindly call preventDefault() inside handlePointerDown
+    const pointerDownMatch = printSrc.match(
+      /function handlePointerDown[\s\S]*?\n  \}/
+    );
+    assert.ok(pointerDownMatch, "Missing handlePointerDown");
+    const pointerDownCode = pointerDownMatch[0].replace(/\/\/[^\n]*/g, "");
+    assert.equal(pointerDownCode.includes("preventDefault"), false);
   });
 });

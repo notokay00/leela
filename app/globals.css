@@ -1144,6 +1144,26 @@
     transform var(--duration-base) var(--ease-archive);
 }
 
+/*
+ * Narrowly scoped touch/selection/drag protection strictly for the Stillness
+ * darkroom light-table prints and non-selectable frame labels so mobile
+ * press-and-hold flashlight exploration never triggers text highlights,
+ * image drag ghosts, or OS long-press callouts (leaving Correspondence,
+ * Cadenza, and page scrolling completely unaffected).
+ */
+.light-table-plane,
+.light-table-print-item,
+.light-table-print,
+.light-table-print-frame,
+.light-table-print-label,
+.light-table-print-base,
+.light-table-print-lit {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+}
+
 .light-table-plane[data-viewer-open="true"] {
   opacity: 0.2;
   transform: scale(0.994);
@@ -1177,6 +1197,7 @@
   padding: 0;
   border: 0;
   text-align: left;
+  -webkit-tap-highlight-color: transparent;
   transform-style: preserve-3d;
   transform: translate3d(0, 0, 0) rotateX(var(--tilt-x, 0deg))
     rotateY(var(--tilt-y, 0deg));

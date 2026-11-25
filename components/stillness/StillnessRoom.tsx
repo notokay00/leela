@@ -259,6 +259,8 @@ export function StillnessRoom({
         data-viewer-open={viewerIndex !== null ? "true" : "false"}
         onPointerMove={handleTablePointerMove}
         onPointerLeave={handleTablePointerLeave}
+        onContextMenu={(event) => event.preventDefault()}
+        onDragStart={(event) => event.preventDefault()}
         className="light-table-plane -mx-1 px-2.5 py-7 sm:mx-0 sm:px-7 sm:py-10"
       >
         <div aria-hidden="true" className="light-table-glow" />

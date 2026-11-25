@@ -5,6 +5,8 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  type DragEvent,
+  type MouseEvent,
   type PointerEvent,
 } from "react";
 import type { StillnessClientPhoto } from "@/content/artifacts/stillness";
@@ -12,6 +14,7 @@ import {
   computeFlashlightRadius,
   computeFlashlightSpotlight,
   computePrintTilt,
+  shouldSuppressClickAfterTouchHold,
 } from "@/lib/stillness/light-table";
 
 export interface LightTablePrintProps {
@@ -48,6 +51,13 @@ export function LightTablePrint({
     mode: "hover" | "touch";
   } | null>(null);
   const touchActiveRef = useRef(false);
+  const touchGestureRef = useRef<{
+    startTime: number;
+    startX: number;
+    startY: number;
+    maxDistance: number;
+  } | null>(null);
+  const suppressClickUntilRef = useRef<number>(0);
   const [imageError, setImageError] = useState(false);
 
   // Apply justified pixel dimensions and image-scaled spotlight radius via CSSOM
@@ -173,9 +183,16 @@ export function LightTablePrint({
       return;
     }
 
-    // Illuminate a localized circular flashlight directly beneath touch/pen input
-    // without blocking vertical scroll or tap-to-open-viewer.
+    // Illuminate a localized circular flashlight directly above touch/pen input
+    // without calling preventDefault() so vertical scrolling and quick taps remain native.
+    suppressClickUntilRef.current = 0;
     touchActiveRef.current = true;
+    touchGestureRef.current = {
+      startTime: Date.now(),
+      startX: event.clientX,
+      startY: event.clientY,
+      maxDistance: 0,
+    };
     buttonRef.current?.setAttribute("data-touch-spot", "true");
     onActiveChange(photo.id);
     updateSpotlightAndTilt(event.clientX, event.clientY, "touch");
@@ -191,6 +208,16 @@ export function LightTablePrint({
     }
 
     if (touchActiveRef.current) {
+      const gesture = touchGestureRef.current;
+      if (gesture) {
+        const dist = Math.hypot(
+          event.clientX - gesture.startX,
+          event.clientY - gesture.startY
+        );
+        if (dist > gesture.maxDistance) {
+          gesture.maxDistance = dist;
+        }
+      }
       scheduleSpotlightUpdate(event.clientX, event.clientY, "touch");
     }
   }
@@ -199,6 +226,18 @@ export function LightTablePrint({
     if (event.pointerType === "mouse") {
       return;
     }
+    const gesture = touchGestureRef.current;
+    touchGestureRef.current = null;
+    if (
+      event.type === "pointerup" &&
+      gesture &&
+      shouldSuppressClickAfterTouchHold(
+        Date.now() - gesture.startTime,
+        gesture.maxDistance
+      )
+    ) {
+      suppressClickUntilRef.current = Date.now() + 400;
+    }
     resetInteraction();
     if (isActive) {
       onActiveChange(null);
@@ -206,29 +245,50 @@ export function LightTablePrint({
   }
 
   function handlePointerLeave() {
+    touchGestureRef.current = null;
     resetInteraction();
     if (isActive) {
       onActiveChange(null);
     }
   }
 
+  function handleContextMenu(event: MouseEvent<HTMLElement>) {
+    event.preventDefault();
+  }
+
+  function handleDragStart(event: DragEvent<HTMLElement>) {
+    event.preventDefault();
+  }
+
   function handleClick() {
+    if (suppressClickUntilRef.current > Date.now()) {
+      suppressClickUntilRef.current = 0;
+      return;
+    }
+    suppressClickUntilRef.current = 0;
     buttonRef.current?.focus({ preventScroll: true });
     onSelect(photo.id);
   }
 
   return (
-    <div className="flex shrink-0 flex-col">
+    <div
+      className="light-table-print-item flex shrink-0 flex-col"
+      onContextMenu={handleContextMenu}
+      onDragStart={handleDragStart}
+    >
       <button
         ref={(node) => {
           buttonRef.current = node;
           registerButtonRef(photo.id, node);
         }}
         type="button"
+        draggable={false}
         data-active={isActive ? "true" : "false"}
         data-selected={isSelected ? "true" : "false"}
         aria-label={`Inspect photograph ${photo.catalogId}`}
         onClick={handleClick}
+        onContextMenu={handleContextMenu}
+        onDragStart={handleDragStart}
         onPointerEnter={handlePointerEnter}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -283,7 +343,7 @@ export function LightTablePrint({
         </span>
       </button>
 
-      <span className="mt-2 font-mono text-[10px] tracking-[0.14em] text-ink-muted">
+      <span className="light-table-print-label mt-2 font-mono text-[10px] tracking-[0.14em] text-ink-muted">
         {photo.catalogId}
       </span>
     </div>
