@@ -283,13 +283,52 @@ describe("The Living Light Table 2.5D physics, bounds, and viewer swipe gestures
 });
 
 describe("Stillness consent enforcement, privacy, and synthetic fixture isolation", () => {
-  it("keeps production Stillness completely empty and excludes withheld/unconsented/unallowlisted assets", () => {
-    assert.equal(STILLNESS_PHOTOS.length, 0);
+  it("registers all 15 curated Stillness photographs in order without invented metadata and excludes withheld/unconsented/unallowlisted assets", () => {
+    assert.equal(STILLNESS_PHOTOS.length, 15);
 
+    const approvedProduction = selectApprovedStillnessPhotos(
+      STILLNESS_PHOTOS,
+      (key) => {
+        const asset = resolveApprovedMediaAsset(key);
+        return (
+          asset !== null &&
+          asset.assetCategory === "personal-media" &&
+          asset.consentConfirmed === true
+        );
+      }
+    );
+    assert.equal(approvedProduction.length, 15);
+
+    let hasPortrait = false;
+    let hasLandscape = false;
+    for (let i = 0; i < STILLNESS_PHOTOS.length; i++) {
+      const padded = String(i + 1).padStart(2, "0");
+      const meta = STILLNESS_PHOTOS[i];
+      const dto = approvedProduction[i];
+
+      assert.equal(meta.id, `stillness-${padded}`);
+      assert.equal(meta.catalogId, `AU/I-${padded}`);
+      assert.equal(meta.assetKey, `arc-i-${padded}`);
+      assert.equal(meta.publishStatus, "ready");
+      assert.equal(meta.consentConfirmed, true);
+      assert.equal(meta.caption, undefined);
+      assert.equal(meta.capturedAt, undefined);
+      assert.ok(meta.width > 0 && meta.height > 0);
+      if (meta.height > meta.width) hasPortrait = true;
+      if (meta.width > meta.height) hasLandscape = true;
+
+      assert.equal(dto.src, `/api/media/arc-i-${padded}`);
+      assert.equal(dto.caption, undefined);
+      assert.equal(dto.capturedAt, undefined);
+    }
+    assert.equal(hasPortrait, true);
+    assert.equal(hasLandscape, true);
+
+    // Negative consent & allowlist gating must still block withheld, unconsented, unallowlisted, and music-category assets
     const mixedConsent: StillnessPhotoMetadata[] = [
       {
         id: "withheld-1",
-        catalogId: "AU/I-01",
+        catalogId: "AU/I-91",
         assetKey: "arc-i-01",
         width: 800,
         height: 600,
@@ -299,7 +338,7 @@ describe("Stillness consent enforcement, privacy, and synthetic fixture isolatio
       },
       {
         id: "ready-no-consent",
-        catalogId: "AU/I-02",
+        catalogId: "AU/I-92",
         assetKey: "arc-i-02",
         width: 800,
         height: 600,
@@ -309,26 +348,51 @@ describe("Stillness consent enforcement, privacy, and synthetic fixture isolatio
       },
       {
         id: "ready-unallowlisted",
-        catalogId: "AU/I-03",
-        assetKey: "arc-i-03",
+        catalogId: "AU/I-93",
+        assetKey: "arc-i-99",
         width: 800,
         height: 600,
         altText: "Not in media registry allowlist",
         publishStatus: "ready",
         consentConfirmed: true,
       },
+      {
+        id: "music-category-rejected",
+        catalogId: "AU/I-94",
+        assetKey: "arc-score-aranjuez",
+        width: 800,
+        height: 600,
+        altText: "Music asset must never resolve as personal photograph",
+        publishStatus: "ready",
+        consentConfirmed: true,
+      },
     ];
 
-    const approved = selectApprovedStillnessPhotos(
+    const approvedMixed = selectApprovedStillnessPhotos(
       mixedConsent,
-      (key) => resolveApprovedMediaAsset(key) !== null
+      (key) => {
+        const asset = resolveApprovedMediaAsset(key);
+        return (
+          asset !== null &&
+          asset.assetCategory === "personal-media" &&
+          asset.consentConfirmed === true
+        );
+      }
     );
-    assert.equal(approved.length, 0);
+    assert.equal(approvedMixed.length, 0);
 
     // Ensure synthetic fixtures are NEVER present in the production media allowlist
     for (const fixture of SYNTHETIC_STILLNESS_FIXTURES) {
       assert.equal(resolveApprovedMediaAsset(fixture.id), null);
     }
+
+    // Viewer renders zero-padded 01 / 15 counter, Escape/Arrow navigation, and zero slideshow timers
+    const viewerSrc = readFileSync("components/stillness/StillnessViewer.tsx", "utf8");
+    assert.ok(viewerSrc.includes('padStart(2, "0")'));
+    assert.ok(viewerSrc.includes('"Escape"'));
+    assert.ok(viewerSrc.includes('"ArrowLeft"'));
+    assert.ok(viewerSrc.includes('"ArrowRight"'));
+    assert.equal(viewerSrc.includes("setInterval"), false);
   });
 
   it("generates colourful synthetic PNG calibration plates covering portrait, landscape, square, and panoramic", () => {

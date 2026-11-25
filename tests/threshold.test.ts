@@ -47,8 +47,9 @@ describe("Milestone 2.1 Threshold state machine", () => {
     assert.ok(unconfiguredState.rejectionMessage);
   });
 
-  it("provides a truthful fallback when no authorized audio source is configured", () => {
-    assert.equal(isAuthorizedAudioConfigured(), false);
+  it("reports live configured archive audio and provides a truthful fallback when unconfigured", () => {
+    assert.equal(isAuthorizedAudioConfigured(), true);
+    assert.equal(isAuthorizedAudioConfigured({ records: [] }), false);
 
     const soundUnavailable = resolveEntryAudioAction("sound", false);
     assert.equal(soundUnavailable.mode, "sound-unavailable");

@@ -24,8 +24,8 @@ export interface JustifiedLayoutOptions {
   gap?: number;
 }
 
-const DEFAULT_DESKTOP_TARGET_HEIGHT = 215;
-const DEFAULT_MOBILE_TARGET_HEIGHT = 152;
+const DEFAULT_DESKTOP_TARGET_HEIGHT = 260;
+const DEFAULT_MOBILE_TARGET_HEIGHT = 280;
 const DEFAULT_GAP = 22;
 const MOBILE_BREAKPOINT = 640;
 

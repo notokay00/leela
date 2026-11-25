@@ -19,7 +19,9 @@ export function getMediaStorageAdapter(
   }
 
   if (driver === "vercel-private-blob" || driver === "vercel-blob") {
-    return new VercelPrivateBlobStorageAdapter();
+    return new VercelPrivateBlobStorageAdapter({
+      storeId: env.BLOB_STORE_ID?.trim() || undefined,
+    });
   }
 
   throw new Error(`Unsupported STORAGE_DRIVER configuration: "${driver}".`);

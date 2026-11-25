@@ -10,7 +10,10 @@ import {
 } from "react";
 import type { StillnessClientPhoto } from "@/content/artifacts/stillness";
 import { cn } from "@/lib/cn";
-import { groupPhotosChronologically } from "@/lib/stillness/chronology";
+import {
+  groupPhotosChronologically,
+  parseGenuineCaptureDate,
+} from "@/lib/stillness/chronology";
 import { computeTableLightPosition } from "@/lib/stillness/light-table";
 import { JustifiedContactGrid } from "./JustifiedContactGrid";
 import { StillnessViewer } from "./StillnessViewer";
@@ -73,6 +76,18 @@ export function StillnessRoom({
   const enableLivingLight =
     capabilities.finePointer && !capabilities.reducedMotion;
 
+  const hasRecordedDates = useMemo(
+    () =>
+      photos.some(
+        (photo) => parseGenuineCaptureDate(photo.capturedAt) !== null
+      ),
+    [photos]
+  );
+
+  const effectiveMode: StillnessMode = hasRecordedDates
+    ? mode
+    : "contact-sheet";
+
   const chronologyGroups = useMemo(
     () => groupPhotosChronologically(photos),
     [photos]
@@ -81,13 +96,13 @@ export function StillnessRoom({
   // Ordered flat photo list matching the active browsing mode so Next/Previous
   // in the viewer matches the visitor's visual reading order.
   const viewerPhotos = useMemo<readonly StillnessClientPhoto[]>(() => {
-    if (mode === "contact-sheet") {
+    if (effectiveMode === "contact-sheet") {
       return photos;
     }
     return chronologyGroups.flatMap((group) =>
       group.items.map((item) => item.photo)
     );
-  }, [chronologyGroups, mode, photos]);
+  }, [chronologyGroups, effectiveMode, photos]);
 
   const registerButtonRef = useCallback(
     (photoId: string, node: HTMLButtonElement | null) => {
@@ -194,7 +209,7 @@ export function StillnessRoom({
           </p>
         </div>
 
-        {photos.length > 0 && (
+        {photos.length > 0 && hasRecordedDates && (
           <div
             role="group"
             aria-label="Stillness browsing mode"
@@ -202,14 +217,14 @@ export function StillnessRoom({
           >
             <button
               type="button"
-              aria-pressed={mode === "contact-sheet"}
+              aria-pressed={effectiveMode === "contact-sheet"}
               onClick={() => {
                 setMode("contact-sheet");
                 setActivePhotoId(null);
               }}
               className={cn(
                 "threshold-control cursor-pointer border-b pb-1 font-mono text-[10px] tracking-[0.2em] uppercase",
-                mode === "contact-sheet"
+                effectiveMode === "contact-sheet"
                   ? "border-ink-secondary text-ink"
                   : "border-transparent text-ink-dim hover:text-ink-secondary"
               )}
@@ -219,14 +234,14 @@ export function StillnessRoom({
 
             <button
               type="button"
-              aria-pressed={mode === "chronology"}
+              aria-pressed={effectiveMode === "chronology"}
               onClick={() => {
                 setMode("chronology");
                 setActivePhotoId(null);
               }}
               className={cn(
                 "threshold-control cursor-pointer border-b pb-1 font-mono text-[10px] tracking-[0.2em] uppercase",
-                mode === "chronology"
+                effectiveMode === "chronology"
                   ? "border-ink-secondary text-ink"
                   : "border-transparent text-ink-dim hover:text-ink-secondary"
               )}
@@ -255,7 +270,7 @@ export function StillnessRoom({
                 No photographs are available here yet.
               </p>
             </div>
-          ) : mode === "contact-sheet" ? (
+          ) : effectiveMode === "contact-sheet" ? (
             <JustifiedContactGrid
               photos={photos}
               enableFlashlight={enableFlashlight}

@@ -30,10 +30,12 @@ export function StillnessViewer({
 
   // Lock background scroll while viewer is open and move focus to Close control.
   useEffect(() => {
+    document.documentElement.classList.add("viewer-scroll-lock");
     document.body.classList.add("viewer-scroll-lock");
     closeButtonRef.current?.focus();
 
     return () => {
+      document.documentElement.classList.remove("viewer-scroll-lock");
       document.body.classList.remove("viewer-scroll-lock");
     };
   }, []);
@@ -153,7 +155,8 @@ export function StillnessViewer({
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-baseline gap-4 font-mono text-xs tracking-[0.14em] text-ink-secondary">
           <span aria-live="polite">
-            {currentIndex + 1} / {photos.length}
+            {String(currentIndex + 1).padStart(2, "0")} /{" "}
+            {String(photos.length).padStart(2, "0")}
           </span>
           <span className="text-ink-dim">{photo.catalogId}</span>
           {photo.capturedAt && (
@@ -175,7 +178,14 @@ export function StillnessViewer({
       </div>
 
       {/* Contained photographic viewing stage (preserves intrinsic ratio, zero cropping) */}
-      <div className="stillness-viewer-frame my-4 flex min-h-0 flex-1 items-center justify-center">
+      <div
+        onClick={(event) => {
+          if (event.target === event.currentTarget) {
+            onClose();
+          }
+        }}
+        className="stillness-viewer-frame my-4 flex min-h-0 flex-1 items-center justify-center"
+      >
         {imageError ? (
           <div className="flex h-64 w-full max-w-md flex-col items-center justify-center border border-hairline bg-chamber px-6 text-center">
             <p className="font-mono text-xs tracking-[0.18em] text-ink-dim uppercase">

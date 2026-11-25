@@ -21,7 +21,14 @@ export default async function StillnessPage() {
 
   const approvedPhotos = selectApprovedStillnessPhotos(
     STILLNESS_PHOTOS,
-    (assetKey) => resolveApprovedMediaAsset(assetKey) !== null
+    (assetKey) => {
+      const asset = resolveApprovedMediaAsset(assetKey);
+      return (
+        asset !== null &&
+        asset.assetCategory === "personal-media" &&
+        asset.consentConfirmed === true
+      );
+    }
   );
 
   return (

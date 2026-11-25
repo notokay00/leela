@@ -43,14 +43,66 @@ describe("Consent defaults and strict opaque media allowlist", () => {
     }
 
     const mediaRecords = getRegisteredArchiveMediaRecords();
-    for (const record of mediaRecords) {
+    const personalRecords = mediaRecords.filter(
+      (record) => record.assetCategory !== "music-soundtrack"
+    );
+    const withheldPersonalRecords = personalRecords.filter(
+      (record) => record.publishStatus !== "ready"
+    );
+    const stillnessPhotoRecords = personalRecords.filter((record) =>
+      record.id.startsWith("arc-i-")
+    );
+    const soundtrackRecords = mediaRecords.filter(
+      (record) => record.assetCategory === "music-soundtrack"
+    );
+
+    // Unapproved personal media (Voices & Film video) stays strictly withheld & unconsented
+    assert.ok(withheldPersonalRecords.length >= 1);
+    for (const record of withheldPersonalRecords) {
       assert.equal(record.publishStatus, "withheld");
       assert.equal(record.consentConfirmed, false);
     }
 
-    // Active production allowlist must contain zero withheld personal assets
-    assert.equal(buildMediaAllowlist(mediaRecords).size, 0);
+    // All 15 curated Stillness photographs use personal-media consent without conflating hostingRightsConfirmed
+    assert.equal(stillnessPhotoRecords.length, 15);
+    for (let i = 0; i < stillnessPhotoRecords.length; i++) {
+      const record = stillnessPhotoRecords[i];
+      const padded = String(i + 1).padStart(2, "0");
+      assert.equal(record.id, `arc-i-${padded}`);
+      assert.equal(record.storageRelativePath, `stillness/stillness-${padded}.webp`);
+      assert.equal(record.mimeType, "image/webp");
+      assert.equal(record.sensitivity, "high");
+      assert.equal(record.publishStatus, "ready");
+      assert.equal(record.consentConfirmed, true);
+      assert.equal(record.assetCategory, "personal-media");
+      assert.equal(record.hostingRightsConfirmed, undefined);
+    }
+
+    // All 24 approved soundtracks use music-soundtrack hosting rights while keeping personal consentConfirmed=false
+    assert.equal(soundtrackRecords.length, 24);
+    for (const record of soundtrackRecords) {
+      assert.equal(record.publishStatus, "ready");
+      assert.equal(record.hostingRightsConfirmed, true);
+      assert.equal(record.consentConfirmed, false);
+      assert.equal(record.sensitivity, "high");
+      assert.ok(record.storageRelativePath.startsWith("soundtracks/"));
+      if (record.id === "arc-snd-poem-022") {
+        assert.equal(record.mimeType, "audio/mp4");
+        assert.equal(record.storageRelativePath, "soundtracks/arc-snd-poem-022.m4a");
+      } else {
+        assert.equal(record.mimeType, "audio/mpeg");
+        assert.ok(record.storageRelativePath.endsWith(".mp3"));
+      }
+    }
+
+    // Active production allowlist contains exclusively the 15 Stillness photographs + 24 approved soundtracks (zero withheld Voices & Film media)
+    const allowlist = buildMediaAllowlist(mediaRecords);
+    assert.equal(allowlist.size, 39);
     assert.equal(resolveApprovedMediaAsset("arc-iii-01-film"), null);
+    assert.equal(resolveApprovedMediaAsset("arc-i-01")?.mimeType, "image/webp");
+    assert.equal(resolveApprovedMediaAsset("arc-i-15")?.mimeType, "image/webp");
+    assert.equal(resolveApprovedMediaAsset("arc-score-aranjuez")?.mimeType, "audio/mpeg");
+    assert.equal(resolveApprovedMediaAsset("arc-snd-poem-022")?.mimeType, "audio/mp4");
   });
 
   it("allows only explicitly ready + consentConfirmed opaque IDs", () => {
@@ -323,12 +375,155 @@ describe("Filesystem path security, Windows awareness, and symlink/junction prot
     }
   });
 
-  it("exposes Vercel Private Blob scaffold cleanly with supportsByteRanges=false", async () => {
-    const scaffold = new VercelPrivateBlobStorageAdapter();
-    assert.equal(scaffold.driverName, "vercel-private-blob");
-    assert.equal(scaffold.supportsByteRanges, false);
-    await assert.rejects(() => scaffold.stat("video/a.mp4", "video/mp4"));
-    await assert.rejects(() => scaffold.openStream("video/a.mp4"));
+  it("implements VercelPrivateBlobStorageAdapter with private access, byte ranges, path safety, and abort cleanup", async () => {
+    const payload = Buffer.from("0123456789abcdefghijklmnopqrstuvwxyz");
+    const calls: {
+      head: Array<{ pathname: string; options: unknown }>;
+      get: Array<{ pathname: string; options: unknown }>;
+    } = { head: [], get: [] };
+    let lastAbortSignal: AbortSignal | undefined;
+    let upstreamCancelled = false;
+
+    const adapter = new VercelPrivateBlobStorageAdapter({
+      storeId: "store_test_private",
+      blobOps: {
+        head: async (pathname, options) => {
+          calls.head.push({ pathname, options });
+          if (pathname === "soundtracks/missing.mp3") {
+            const notFound = new Error("Not found");
+            notFound.name = "BlobNotFoundError";
+            throw notFound;
+          }
+          return {
+            size: payload.length,
+            etag: '"etag-private-1"',
+            uploadedAt: new Date("2026-11-24T00:00:00.000Z"),
+          };
+        },
+        get: async (pathname, options) => {
+          calls.get.push({ pathname, options });
+          lastAbortSignal = options.abortSignal;
+          if (pathname === "soundtracks/missing.mp3") {
+            return null;
+          }
+          const rangeHeader = options.headers?.Range;
+          let slice = payload;
+          const responseHeaders = new Headers();
+          if (rangeHeader) {
+            const match = /^bytes=(\d+)-(\d+)$/.exec(rangeHeader);
+            assert.ok(match);
+            const start = Number(match[1]);
+            const end = Number(match[2]);
+            slice = payload.subarray(start, end + 1);
+            responseHeaders.set(
+              "content-range",
+              `bytes ${start}-${end}/${payload.length}`
+            );
+          }
+
+          if (pathname === "soundtracks/range-mismatch.mp3") {
+            responseHeaders.delete("content-range");
+          }
+
+          const stream = new ReadableStream<Uint8Array>({
+            start(controller) {
+              controller.enqueue(new Uint8Array(slice.subarray(0, 4)));
+              if (slice.length > 4) {
+                controller.enqueue(new Uint8Array(slice.subarray(4)));
+              }
+              controller.close();
+            },
+            cancel() {
+              upstreamCancelled = true;
+            },
+          });
+
+          return {
+            statusCode: 200,
+            stream,
+            headers: responseHeaders,
+          };
+        },
+      },
+    });
+
+    assert.equal(adapter.driverName, "vercel-private-blob");
+    assert.equal(adapter.supportsByteRanges, true);
+
+    // Reject invalid/traversal keys before hitting Blob SDK
+    assert.equal(await adapter.stat("../escape.mp3", "audio/mpeg"), null);
+    await assert.rejects(() => adapter.openStream("soundtracks/../../etc/passwd"));
+    assert.equal(calls.head.length, 0);
+    assert.equal(calls.get.length, 0);
+
+    // stat() enforces allowlist MIME and maps BlobNotFoundError to null
+    const stat = await adapter.stat("soundtracks/arc-snd-poem-022.m4a", "audio/mp4");
+    assert.ok(stat !== null);
+    assert.equal(stat.size, payload.length);
+    assert.equal(stat.contentType, "audio/mp4");
+    assert.equal(stat.etag, '"etag-private-1"');
+    assert.equal(
+      await adapter.stat("soundtracks/missing.mp3", "audio/mpeg"),
+      null
+    );
+
+    // Full private stream (no Range header)
+    const fullHandle = await adapter.openStream("soundtracks/arc-score-aranjuez.mp3");
+    const fullChunks: Uint8Array[] = [];
+    const fullReader = fullHandle.stream.getReader();
+    while (true) {
+      const next = await fullReader.read();
+      if (next.done) break;
+      fullChunks.push(next.value);
+    }
+    assert.ok(Buffer.concat(fullChunks).equals(payload));
+    const fullOpts = calls.get[0]?.options as {
+      access: string;
+      headers?: Record<string, string>;
+      token?: string;
+      storeId?: string;
+    };
+    assert.equal(fullOpts.access, "private");
+    assert.equal(fullOpts.headers, undefined);
+    assert.equal(fullOpts.storeId, "store_test_private");
+    assert.equal(fullOpts.token, undefined);
+
+    // Ranged private stream (206) sends exact RFC 9110 Range header and validates Content-Range
+    const rangeHandle = await adapter.openStream(
+      "soundtracks/arc-snd-poem-022.m4a",
+      { start: 10, end: 19 }
+    );
+    const rangeChunks: Uint8Array[] = [];
+    const rangeReader = rangeHandle.stream.getReader();
+    while (true) {
+      const next = await rangeReader.read();
+      if (next.done) break;
+      rangeChunks.push(next.value);
+    }
+    assert.equal(Buffer.concat(rangeChunks).toString("utf8"), "abcdefghij");
+    const rangeOpts = calls.get[1]?.options as {
+      access: string;
+      headers?: Record<string, string>;
+    };
+    assert.equal(rangeOpts.access, "private");
+    assert.equal(rangeOpts.headers?.Range, "bytes=10-19");
+
+    // Upstream missing Content-Range on ranged fetch is rejected safely
+    await assert.rejects(() =>
+      adapter.openStream("soundtracks/range-mismatch.mp3", { start: 0, end: 5 })
+    );
+
+    // Closing or cancelling stream aborts upstream AbortSignal and cancels reader
+    upstreamCancelled = false;
+    const cancelHandle = await adapter.openStream("soundtracks/arc-score-aranjuez.mp3");
+    const cancelReader = cancelHandle.stream.getReader();
+    const firstChunk = await cancelReader.read();
+    assert.equal(firstChunk.done, false);
+    assert.equal(lastAbortSignal?.aborted, false);
+    cancelHandle.close();
+    assert.equal(lastAbortSignal?.aborted, true);
+    await cancelReader.cancel().catch(() => {});
+    assert.equal(upstreamCancelled, true);
   });
 });
 

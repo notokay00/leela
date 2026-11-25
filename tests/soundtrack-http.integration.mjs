@@ -1,12 +1,26 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { randomBytes, scrypt } from "node:crypto";
+import { existsSync } from "node:fs";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
 const PORT_PROD = 3098;
 const PORT_SYNTH = 3099;
+
+const ALL_24_TRACKS = [
+  { id: "arc-score-aranjuez", mimeType: "audio/mpeg", ext: "mp3" },
+  ...Array.from({ length: 23 }, (_, idx) => {
+    const num = String(idx + 1).padStart(3, "0");
+    const isTrack022 = idx + 1 === 22;
+    return {
+      id: `arc-snd-poem-${num}`,
+      mimeType: isTrack022 ? "audio/mp4" : "audio/mpeg",
+      ext: isTrack022 ? "m4a" : "mp3",
+    };
+  }),
+];
 
 function scryptHash(passphrase) {
   return new Promise((resolve, reject) => {
@@ -29,11 +43,7 @@ function scryptHash(passphrase) {
   });
 }
 
-/**
- * Generates a valid deterministic PCM WAV tone buffer purely for isolated
- * synthetic testing (never committed, never part of production content).
- */
-function generateSyntheticWav(freqHz, durationSeconds = 4, sampleRate = 22050) {
+function generateSyntheticWav(freqHz, durationSeconds = 3, sampleRate = 22050) {
   const numSamples = Math.floor(sampleRate * durationSeconds);
   const dataSize = numSamples * 2;
   const buffer = Buffer.alloc(44 + dataSize);
@@ -42,9 +52,9 @@ function generateSyntheticWav(freqHz, durationSeconds = 4, sampleRate = 22050) {
   buffer.writeUInt32LE(36 + dataSize, 4);
   buffer.write("WAVE", 8);
   buffer.write("fmt ", 12);
-  buffer.writeUInt32LE(16, 16); // PCM chunk size
-  buffer.writeUInt16LE(1, 20); // PCM format
-  buffer.writeUInt16LE(1, 22); // mono
+  buffer.writeUInt32LE(16, 16);
+  buffer.writeUInt16LE(1, 20);
+  buffer.writeUInt16LE(1, 22);
   buffer.writeUInt32LE(sampleRate, 24);
   buffer.writeUInt32LE(sampleRate * 2, 28);
   buffer.writeUInt16LE(2, 32);
@@ -105,15 +115,52 @@ function spawnNextStart(port, envOverrides) {
   });
 }
 
-async function runDefaultProductionSuite(passphrase, passphraseHash, sessionSecret) {
+async function createFallbackSoundtracksRoot() {
+  const tmpRoot = await mkdtemp(path.join(os.tmpdir(), "leela-snd-prod-"));
+  const soundtracksDir = path.join(tmpRoot, "soundtracks");
+  await mkdir(soundtracksDir, { recursive: true });
+
+  for (const track of ALL_24_TRACKS) {
+    const bytes = Buffer.alloc(4096);
+    if (track.ext === "m4a") {
+      Buffer.from([0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x4d, 0x34, 0x41, 0x20]).copy(bytes, 0);
+    } else {
+      Buffer.from([0x49, 0x44, 0x33, 0x03, 0x00, 0x00]).copy(bytes, 0);
+    }
+    for (let i = 16; i < bytes.length; i++) {
+      bytes[i] = (i * 13) % 251;
+    }
+    await writeFile(path.join(soundtracksDir, `${track.id}.${track.ext}`), bytes);
+  }
+  return tmpRoot;
+}
+
+async function runActiveProductionSuite(passphrase, passphraseHash, sessionSecret) {
   const origin = `http://localhost:${PORT_PROD}`;
-  const server = spawnNextStart(PORT_PROD, {
+  const requestedDriver = (
+    process.env.SOUNDTRACK_HTTP_STORAGE_DRIVER ?? "local-fs"
+  ).trim();
+
+  let tempFallbackRoot = null;
+  const envOverrides = {
     APP_ORIGIN: origin,
+    STORAGE_DRIVER: requestedDriver,
     ARCHIVE_PASSPHRASE_HASH: passphraseHash,
     ARCHIVE_SESSION_SECRET: sessionSecret,
     ARCHIVE_ENABLE_SYNTHETIC_TEST_FIXTURES: "0",
-  });
+  };
 
+  if (requestedDriver === "local-fs") {
+    const stagedRoot = process.env.LOCAL_MEDIA_ROOT || "D:\\leela-archive-media";
+    if (existsSync(path.join(stagedRoot, "soundtracks", "arc-snd-poem-022.m4a"))) {
+      envOverrides.LOCAL_MEDIA_ROOT = stagedRoot;
+    } else {
+      tempFallbackRoot = await createFallbackSoundtracksRoot();
+      envOverrides.LOCAL_MEDIA_ROOT = tempFallbackRoot;
+    }
+  }
+
+  const server = spawnNextStart(PORT_PROD, envOverrides);
   let stderrBuf = "";
   server.stderr.on("data", (chunk) => {
     stderrBuf += chunk.toString();
@@ -124,14 +171,32 @@ async function runDefaultProductionSuite(passphrase, passphraseHash, sessionSecr
       throw new Error(`${err.message}\nServer stderr:\n${stderrBuf}`);
     });
 
-    // 1. Unauthenticated Threshold leaks ZERO poem soundtrack metadata or internal IDs
+    // 1. Unauthenticated Threshold leaks ZERO poem soundtrack metadata or poem asset IDs
     const thresholdHtml = await (await fetch(`${origin}/`)).text();
     assert.equal(thresholdHtml.includes("Hothon Se Chhu Lo Tum"), false);
+    assert.equal(thresholdHtml.includes("Old Money"), false);
     assert.equal(thresholdHtml.includes("Futile Devices"), false);
     assert.equal(thresholdHtml.includes("snd-poem-001"), false);
     assert.equal(thresholdHtml.includes("arc-snd-poem-001"), false);
 
-    // 2. Authenticate and verify default unavailable soundtrack across rooms
+    // 2. Unauthenticated GET and HEAD on private soundtrack endpoints strictly return 401
+    for (const id of [
+      "arc-score-aranjuez",
+      "arc-snd-poem-001",
+      "arc-snd-poem-022",
+      "arc-snd-poem-023",
+    ]) {
+      const unauthGet = await fetch(`${origin}/api/media/${id}`);
+      assert.equal(unauthGet.status, 401, `Expected 401 GET on ${id}`);
+      assert.ok((unauthGet.headers.get("cache-control") ?? "").includes("no-store"));
+
+      const unauthHead = await fetch(`${origin}/api/media/${id}`, {
+        method: "HEAD",
+      });
+      assert.equal(unauthHead.status, 401, `Expected 401 HEAD on ${id}`);
+    }
+
+    // 3. Authenticate and verify room pages + authenticated soundtrack metadata hydration
     const cookie = await unlockSession(origin, passphrase);
 
     for (const route of [
@@ -139,6 +204,7 @@ async function runDefaultProductionSuite(passphrase, passphraseHash, sessionSecr
       "/archive/stillness",
       "/archive/correspondence",
       "/archive/correspondence/for-you-poem",
+      "/archive/correspondence/poem-022",
       "/archive/voices-and-film",
       "/archive/cadenza",
     ]) {
@@ -147,26 +213,99 @@ async function runDefaultProductionSuite(passphrase, passphraseHash, sessionSecr
       });
       assert.equal(res.status, 200, `Expected 200 on ${route}`);
       const html = await res.text();
-      assert.ok(html.includes('data-audio-status="unavailable"'), `Missing unavailable dock status on ${route}`);
       assert.ok(html.includes("Concierto de Aranjuez, II. Adagio"), `Missing Rodrigo title on ${route}`);
       assert.ok(html.includes("Joaquín Rodrigo"), `Missing Rodrigo artist on ${route}`);
-      assert.equal(html.includes("/api/media/arc-score-aranjuez"), false, `Unexpected fake stream URL on ${route}`);
-      assert.equal(html.includes("/api/media/arc-snd-poem-"), false, `Unexpected fake poem stream URL on ${route}`);
+      assert.ok(html.includes("/api/media/arc-score-aranjuez"), `Missing Rodrigo stream URL on ${route}`);
+      assert.ok(html.includes("/api/media/arc-snd-poem-001"), `Missing poem 001 URL on ${route}`);
+      assert.ok(html.includes("/api/media/arc-snd-poem-022"), `Missing poem 022 URL on ${route}`);
+      assert.equal(html.includes("/api/media/arc-iii-01-film"), false, `Withheld personal media leaked on ${route}`);
     }
 
-    // 3. Unconnected soundtrack media endpoints return uniform 404
-    for (const id of ["arc-score-aranjuez", "arc-snd-poem-001", "arc-snd-poem-023"]) {
-      const res = await fetch(`${origin}/api/media/${id}`, {
+    // 4. Verify HEAD across ALL 24 approved soundtracks (correct MIME, no-store, Accept-Ranges, non-zero size)
+    const trackSizes = new Map();
+    for (const track of ALL_24_TRACKS) {
+      const headRes = await fetch(`${origin}/api/media/${track.id}`, {
+        method: "HEAD",
         headers: { cookie },
       });
-      assert.equal(res.status, 404);
+      assert.equal(headRes.status, 200, `HEAD failed for ${track.id} (driver=${requestedDriver})`);
+      assert.equal(headRes.headers.get("content-type"), track.mimeType, `Wrong MIME for ${track.id}`);
+      assert.equal(headRes.headers.get("accept-ranges"), "bytes");
+      assert.equal(
+        headRes.headers.get("cache-control"),
+        "private, no-store, max-age=0"
+      );
+      assert.equal(headRes.headers.get("x-content-type-options"), "nosniff");
+      const contentLength = Number(headRes.headers.get("content-length"));
+      assert.ok(Number.isSafeInteger(contentLength) && contentLength > 1024, `Invalid size for ${track.id}`);
+      assert.equal((await headRes.arrayBuffer()).byteLength, 0);
+      trackSizes.set(track.id, contentLength);
     }
+
+    // 5. Verify authenticated byte-range GET (206), suffix range (206), and unsatisfiable range (416)
+    for (const track of [
+      ALL_24_TRACKS[0],
+      ALL_24_TRACKS[1],
+      ALL_24_TRACKS[22], // track 022 (audio/mp4 M4A)
+      ALL_24_TRACKS[23],
+    ]) {
+      const totalSize = trackSizes.get(track.id);
+      const startRange = await fetch(`${origin}/api/media/${track.id}`, {
+        headers: { cookie, range: "bytes=0-1023" },
+      });
+      assert.equal(startRange.status, 206, `Expected 206 for ${track.id}`);
+      assert.equal(startRange.headers.get("content-type"), track.mimeType);
+      assert.equal(
+        startRange.headers.get("content-range"),
+        `bytes 0-1023/${totalSize}`
+      );
+      assert.equal(startRange.headers.get("content-length"), "1024");
+      assert.equal(
+        startRange.headers.get("cache-control"),
+        "private, no-store, max-age=0"
+      );
+      const firstSlice = Buffer.from(await startRange.arrayBuffer());
+      assert.equal(firstSlice.length, 1024);
+
+      if (track.id === "arc-snd-poem-022") {
+        // Verify ISO BMFF / M4A ftyp box header
+        assert.equal(firstSlice.subarray(4, 8).toString("ascii"), "ftyp");
+      }
+
+      const suffixRange = await fetch(`${origin}/api/media/${track.id}`, {
+        headers: { cookie, range: "bytes=-256" },
+      });
+      assert.equal(suffixRange.status, 206);
+      assert.equal(
+        suffixRange.headers.get("content-range"),
+        `bytes ${totalSize - 256}-${totalSize - 1}/${totalSize}`
+      );
+      assert.equal((await suffixRange.arrayBuffer()).byteLength, 256);
+
+      const unsatRange = await fetch(`${origin}/api/media/${track.id}`, {
+        headers: { cookie, range: `bytes=${totalSize + 100}-` },
+      });
+      assert.equal(unsatRange.status, 416);
+      assert.equal(
+        unsatRange.headers.get("content-range"),
+        `bytes */${totalSize}`
+      );
+    }
+
+    // 6. Withheld personal media asset MUST remain strictly 404
+    const withheldPersonal = await fetch(`${origin}/api/media/arc-iii-01-film`, {
+      headers: { cookie },
+    });
+    assert.equal(withheldPersonal.status, 404);
   } finally {
     server.kill();
+    if (tempFallbackRoot) {
+      await rm(tempFallbackRoot, { recursive: true, force: true });
+    }
   }
 }
 
-async function runSyntheticAudioSuite(passphrase, passphraseHash, sessionSecret) {
+async function runSyntheticRightsIsolationSuite(passphrase, passphraseHash, sessionSecret) {
   const origin = `http://localhost:${PORT_SYNTH}`;
   const tmpRoot = await mkdtemp(path.join(os.tmpdir(), "leela-soundtrack-http-"));
   const mediaRoot = path.join(tmpRoot, "media");
@@ -174,32 +313,19 @@ async function runSyntheticAudioSuite(passphrase, passphraseHash, sessionSecret)
 
   await mkdir(path.join(mediaRoot, "audio"), { recursive: true });
 
-  const rodrigoWav = generateSyntheticWav(261.63, 3);
-  const poem1Wav = generateSyntheticWav(329.63, 3);
+  const approvedWav = generateSyntheticWav(261.63, 2);
   const consentOnlyWav = generateSyntheticWav(392.0, 2);
 
-  await writeFile(path.join(mediaRoot, "audio", "synth-rodrigo.wav"), rodrigoWav);
-  await writeFile(path.join(mediaRoot, "audio", "synth-poem-001.wav"), poem1Wav);
-  await writeFile(path.join(mediaRoot, "audio", "synth-poem-002.wav"), consentOnlyWav);
+  await writeFile(path.join(mediaRoot, "audio", "synth-music-ok.wav"), approvedWav);
+  await writeFile(path.join(mediaRoot, "audio", "synth-music-blocked.wav"), consentOnlyWav);
 
   const manifest = [
     {
-      id: "arc-score-aranjuez",
-      storageRelativePath: "audio/synth-rodrigo.wav",
+      id: "synth-music-approved",
+      storageRelativePath: "audio/synth-music-ok.wav",
       mimeType: "audio/wav",
-      downloadFilename: "synth-rodrigo.wav",
-      sensitivity: "standard",
-      publishStatus: "ready",
-      consentConfirmed: false,
-      assetCategory: "music-soundtrack",
-      hostingRightsConfirmed: true,
-    },
-    {
-      id: "arc-snd-poem-001",
-      storageRelativePath: "audio/synth-poem-001.wav",
-      mimeType: "audio/wav",
-      downloadFilename: "synth-poem-001.wav",
-      sensitivity: "standard",
+      downloadFilename: "synth-music-ok.wav",
+      sensitivity: "high",
       publishStatus: "ready",
       consentConfirmed: false,
       assetCategory: "music-soundtrack",
@@ -208,11 +334,11 @@ async function runSyntheticAudioSuite(passphrase, passphraseHash, sessionSecret)
     {
       // Deliberately has personal consentConfirmed=true but hostingRightsConfirmed=false:
       // MUST remain blocked because personal consent never substitutes for music rights!
-      id: "arc-snd-poem-002",
-      storageRelativePath: "audio/synth-poem-002.wav",
+      id: "synth-music-consent-only",
+      storageRelativePath: "audio/synth-music-blocked.wav",
       mimeType: "audio/wav",
-      downloadFilename: "synth-poem-002.wav",
-      sensitivity: "standard",
+      downloadFilename: "synth-music-blocked.wav",
+      sensitivity: "high",
       publishStatus: "ready",
       consentConfirmed: true,
       assetCategory: "music-soundtrack",
@@ -241,52 +367,36 @@ async function runSyntheticAudioSuite(passphrase, passphraseHash, sessionSecret)
       throw new Error(`${err.message}\nServer stderr:\n${stderrBuf}`);
     });
 
-    // 1. Unauthenticated audio endpoints strictly return 401
-    for (const id of ["arc-score-aranjuez", "arc-snd-poem-001"]) {
-      const unauth = await fetch(`${origin}/api/media/${id}`);
-      assert.equal(unauth.status, 401);
-    }
+    const unauth = await fetch(`${origin}/api/media/synth-music-approved`);
+    assert.equal(unauth.status, 401);
 
-    // 2. Unauthenticated Threshold still leaks ZERO poem tracks even when fixtures exist
-    const unauthThreshold = await (await fetch(`${origin}/`)).text();
-    assert.equal(unauthThreshold.includes("Hothon Se Chhu Lo Tum"), false);
-    assert.equal(unauthThreshold.includes("/api/media/arc-snd-poem-001"), false);
-
-    // 3. Authenticate and verify approved music-soundtrack streaming + Range requests
     const cookie = await unlockSession(origin, passphrase);
 
-    const rodrigoRes = await fetch(`${origin}/api/media/arc-score-aranjuez`, {
+    const approvedRes = await fetch(`${origin}/api/media/synth-music-approved`, {
       headers: { cookie },
     });
-    assert.equal(rodrigoRes.status, 200);
-    assert.equal(rodrigoRes.headers.get("content-type"), "audio/wav");
-    assert.equal(rodrigoRes.headers.get("accept-ranges"), "bytes");
-    assert.ok(Buffer.from(await rodrigoRes.arrayBuffer()).equals(rodrigoWav));
+    assert.equal(approvedRes.status, 200);
+    assert.equal(approvedRes.headers.get("content-type"), "audio/wav");
+    assert.equal(
+      approvedRes.headers.get("cache-control"),
+      "private, no-store, max-age=0"
+    );
+    assert.ok(Buffer.from(await approvedRes.arrayBuffer()).equals(approvedWav));
 
-    const rangeRes = await fetch(`${origin}/api/media/arc-snd-poem-001`, {
+    const rangeRes = await fetch(`${origin}/api/media/synth-music-approved`, {
       headers: { cookie, range: "bytes=0-511" },
     });
     assert.equal(rangeRes.status, 206);
     assert.equal(rangeRes.headers.get("content-length"), "512");
     assert.ok(
-      Buffer.from(await rangeRes.arrayBuffer()).equals(poem1Wav.subarray(0, 512))
+      Buffer.from(await rangeRes.arrayBuffer()).equals(approvedWav.subarray(0, 512))
     );
 
-    // 4. Music record with consentConfirmed=true & hostingRightsConfirmed=false is strictly 404
-    const consentOnlyRes = await fetch(`${origin}/api/media/arc-snd-poem-002`, {
+    // Music record with consentConfirmed=true & hostingRightsConfirmed=false is strictly 404
+    const consentOnlyRes = await fetch(`${origin}/api/media/synth-music-consent-only`, {
       headers: { cookie },
     });
     assert.equal(consentOnlyRes.status, 404);
-
-    // 5. Authenticated poem page includes approved poem stream URL and excludes unapproved poem-002
-    const poemPageHtml = await (
-      await fetch(`${origin}/archive/correspondence/for-you-poem`, {
-        headers: { cookie },
-      })
-    ).text();
-    assert.ok(poemPageHtml.includes("/api/media/arc-score-aranjuez"));
-    assert.ok(poemPageHtml.includes("/api/media/arc-snd-poem-001"));
-    assert.equal(poemPageHtml.includes("/api/media/arc-snd-poem-002"), false);
   } finally {
     server.kill();
     await rm(tmpRoot, { recursive: true, force: true });
@@ -298,8 +408,8 @@ async function run() {
   const passphraseHash = await scryptHash(ephemeralPassphrase);
   const sessionSecret = randomBytes(32).toString("hex");
 
-  await runDefaultProductionSuite(ephemeralPassphrase, passphraseHash, sessionSecret);
-  await runSyntheticAudioSuite(ephemeralPassphrase, passphraseHash, sessionSecret);
+  await runActiveProductionSuite(ephemeralPassphrase, passphraseHash, sessionSecret);
+  await runSyntheticRightsIsolationSuite(ephemeralPassphrase, passphraseHash, sessionSecret);
 
   console.log("ALL LIVE HTTP SOUNDTRACK SECURITY, AVAILABILITY & RIGHTS SUITES PASSED.");
 }

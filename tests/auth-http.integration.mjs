@@ -254,7 +254,7 @@ async function run() {
     assert.ok(archiveHtml.includes("Cadenza"));
     assert.ok(!archiveHtml.includes("AU/I") && !archiveHtml.includes("AU/II") && !archiveHtml.includes("AU/III") && !archiveHtml.includes("AU/IV"));
 
-    // 7b. Protected /archive/stillness requires auth & renders honest empty state in production
+    // 7b. Protected /archive/stillness requires auth & renders the 15 approved private photographs (zero test fixtures)
     const unauthStillness = await fetch(`${ORIGIN}/archive/stillness`, {
       redirect: "manual",
     });
@@ -266,7 +266,9 @@ async function run() {
     });
     assert.equal(authStillness.status, 200);
     const stillnessHtml = await authStillness.text();
-    assert.ok(stillnessHtml.includes("No photographs are available here yet."));
+    assert.ok(stillnessHtml.includes("AU/I · 15 photographs"));
+    assert.ok(stillnessHtml.includes("/api/media/arc-i-01"));
+    assert.ok(stillnessHtml.includes("/api/media/arc-i-15"));
     assert.ok(!stillnessHtml.includes("TEST FIXTURES"));
 
     // 7c. Dev-only visual test harness and fixture API must be 404 in production

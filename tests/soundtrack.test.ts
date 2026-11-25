@@ -262,7 +262,7 @@ function buildTestCatalog(options: {
 }
 
 describe("Phase 4.1 — Track mapping, exact 23-poem assignments & SHA-256 preservation", () => {
-  it("configures Joaquín Rodrigo (Grimethorpe performance) as the archive-wide default with verified format metadata while keeping hosting unapproved", () => {
+  it("configures Joaquín Rodrigo (Grimethorpe performance) as the archive-wide default with verified format metadata and approved hosting", () => {
     assert.equal(ARCHIVE_DEFAULT_SOUNDTRACK.scope, "archive");
     assert.equal(
       ARCHIVE_DEFAULT_SOUNDTRACK.title,
@@ -270,13 +270,13 @@ describe("Phase 4.1 — Track mapping, exact 23-poem assignments & SHA-256 prese
     );
     assert.equal(ARCHIVE_DEFAULT_SOUNDTRACK.artist, "Joaquín Rodrigo");
     assert.match(ARCHIVE_DEFAULT_SOUNDTRACK.performance ?? "", /Grimethorpe/);
-    assert.equal(ARCHIVE_DEFAULT_SOUNDTRACK.rightsApproval, "unverified");
-    assert.equal(ARCHIVE_DEFAULT_SOUNDTRACK.hostingApproved, false);
+    assert.equal(ARCHIVE_DEFAULT_SOUNDTRACK.rightsApproval, "licensed");
+    assert.equal(ARCHIVE_DEFAULT_SOUNDTRACK.hostingApproved, true);
     assert.equal(ARCHIVE_DEFAULT_SOUNDTRACK.mimeType, "audio/mpeg");
     assert.equal(ARCHIVE_DEFAULT_SOUNDTRACK.audioFormat, "mp3");
   });
 
-  it("maps all 23 poem IDs exactly once to 23 unique soundtrack IDs with verbatim titles, ellipses, artists, and verified formats", () => {
+  it("maps all 23 poem IDs exactly once to 23 unique soundtrack IDs with verbatim titles, ellipses, artists, approved hosting, and verified formats", () => {
     assert.equal(POEM_SOUNDTRACK_MANIFEST.length, 23);
     assert.equal(ALL_SOUNDTRACK_RECORDS.length, 24);
 
@@ -296,8 +296,8 @@ describe("Phase 4.1 — Track mapping, exact 23-poem assignments & SHA-256 prese
 
     for (const record of ALL_SOUNDTRACK_RECORDS) {
       assert.equal(isValidOpaqueAssetId(record.assetKey), true);
-      assert.equal(record.rightsApproval, "unverified");
-      assert.equal(record.hostingApproved, false);
+      assert.equal(record.rightsApproval, "licensed");
+      assert.equal(record.hostingApproved, true);
       if (record.id === "snd-poem-022") {
         assert.equal(record.mimeType, "audio/mp4");
         assert.equal(record.audioFormat, "m4a");
@@ -373,30 +373,45 @@ describe("Phase 4.1 — Track mapping, exact 23-poem assignments & SHA-256 prese
     assert.equal(isApprovedMediaRecord(musicWithConsentOnly), false);
     assert.equal(isApprovedMediaRecord(musicWithHostingRights), true);
 
-    // Production manifest records remain unplayable while rightsApproval === "unverified"
+    // Unverified manifest records remain unplayable even if allowlisted
+    const unverifiedRecord = {
+      ...POEM_SOUNDTRACK_MANIFEST[0],
+      rightsApproval: "unverified" as const,
+      hostingApproved: false,
+    };
+    assert.equal(isSoundtrackRecordPlayable(unverifiedRecord, () => true), false);
+
+    // Only explicitly approved hosting + verified rights + allowlisted asset becomes playable
     assert.equal(
       isSoundtrackRecordPlayable(POEM_SOUNDTRACK_MANIFEST[0], () => true),
+      true
+    );
+    assert.equal(
+      isSoundtrackRecordPlayable(POEM_SOUNDTRACK_MANIFEST[0], () => false),
       false
     );
 
-    // Only explicitly approved hosting + verified rights + allowlisted asset becomes playable
-    const approvedRecord = {
-      ...POEM_SOUNDTRACK_MANIFEST[0],
-      rightsApproval: "licensed" as const,
-      hostingApproved: true,
-    };
-    assert.equal(isSoundtrackRecordPlayable(approvedRecord, () => true), true);
-    assert.equal(isSoundtrackRecordPlayable(approvedRecord, () => false), false);
-
-    // Default server resolution with zero supplied recordings reports all tracks unavailable
+    // Default server resolution with activated 24-track registry reports all 24 tracks available
     const prodArchive = resolveServerArchiveSoundtrack();
-    assert.equal(prodArchive.available, false);
-    assert.equal(prodArchive.src, null);
+    assert.equal(prodArchive.available, true);
+    assert.equal(prodArchive.src, "/api/media/arc-score-aranjuez");
+    assert.equal(prodArchive.mimeType, "audio/mpeg");
 
     const prodCatalog = resolveServerSoundtrackCatalog();
-    assert.equal(prodCatalog.archiveTrack.available, false);
+    assert.equal(prodCatalog.archiveTrack.available, true);
     assert.equal(prodCatalog.poemTracks.length, 23);
-    assert.ok(prodCatalog.poemTracks.every((t) => !t.available && t.src === null));
+    assert.ok(
+      prodCatalog.poemTracks.every(
+        (t) => t.available && t.src?.startsWith("/api/media/arc-snd-poem-")
+      )
+    );
+    assert.equal(prodCatalog.poemTracks[21].mimeType, "audio/mp4");
+    assert.equal(prodCatalog.poemTracks[21].audioFormat, "m4a");
+
+    // Empty media allowlist still degrades cleanly to unavailable without fake playback
+    const unconfiguredArchive = resolveServerArchiveSoundtrack({ records: [] });
+    assert.equal(unconfiguredArchive.available, false);
+    assert.equal(unconfiguredArchive.src, null);
   });
 });
 

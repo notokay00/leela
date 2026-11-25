@@ -4,9 +4,8 @@ import type { SoundtrackRecord } from "../lib/audio/soundtrack-types.ts";
  * Archive-wide default soundtrack across The Archive of Us:
  * Joaquín Rodrigo — Concierto de Aranjuez, II. Adagio (Grimethorpe performance).
  *
- * Verified local private asset format is recorded (`audio/mpeg`, `mp3`), while
- * website streaming remains disabled (`rightsApproval: "unverified"`,
- * `hostingApproved: false`) until hosting permissions are established.
+ * Hosting/streaming rights are explicitly approved (`rightsApproval: "licensed"`,
+ * `hostingApproved: true`), strictly separate from personal-media consent.
  */
 export const ARCHIVE_DEFAULT_SOUNDTRACK: SoundtrackRecord = {
   id: "snd-archive-rodrigo",
@@ -17,8 +16,8 @@ export const ARCHIVE_DEFAULT_SOUNDTRACK: SoundtrackRecord = {
   mimeType: "audio/mpeg",
   audioFormat: "mp3",
   assetKey: "arc-score-aranjuez",
-  rightsApproval: "unverified",
-  hostingApproved: false,
+  rightsApproval: "licensed",
+  hostingApproved: true,
   gainMultiplier: 1,
 };
 
@@ -33,9 +32,9 @@ export const ARCHIVE_DEFAULT_SOUNDTRACK: SoundtrackRecord = {
  * capitalization, artist, and supplied ellipsis verbatim.
  *
  * Verified format metadata (`audio/mpeg` / `mp3` for 22 poems, `audio/mp4` / `m4a`
- * for track 022) is recorded, while all 23 tracks remain unavailable for website
- * playback (`rightsApproval: "unverified"`, `hostingApproved: false`) until
- * hosting permissions are established.
+ * for track 022) and explicit hosting approval (`rightsApproval: "licensed"`,
+ * `hostingApproved: true`) are recorded strictly separately from personal-media
+ * consent.
  */
 export const POEM_SOUNDTRACK_MANIFEST: readonly SoundtrackRecord[] = [
   {
@@ -48,8 +47,8 @@ export const POEM_SOUNDTRACK_MANIFEST: readonly SoundtrackRecord[] = [
     mimeType: "audio/mpeg",
     audioFormat: "mp3",
     assetKey: "arc-snd-poem-001",
-    rightsApproval: "unverified",
-    hostingApproved: false,
+    rightsApproval: "licensed",
+    hostingApproved: true,
     gainMultiplier: 1,
   },
   {
@@ -62,8 +61,8 @@ export const POEM_SOUNDTRACK_MANIFEST: readonly SoundtrackRecord[] = [
     mimeType: "audio/mpeg",
     audioFormat: "mp3",
     assetKey: "arc-snd-poem-002",
-    rightsApproval: "unverified",
-    hostingApproved: false,
+    rightsApproval: "licensed",
+    hostingApproved: true,
     gainMultiplier: 1,
   },
   {
@@ -76,8 +75,8 @@ export const POEM_SOUNDTRACK_MANIFEST: readonly SoundtrackRecord[] = [
     mimeType: "audio/mpeg",
     audioFormat: "mp3",
     assetKey: "arc-snd-poem-003",
-    rightsApproval: "unverified",
-    hostingApproved: false,
+    rightsApproval: "licensed",
+    hostingApproved: true,
     gainMultiplier: 1,
   },
   {
@@ -90,8 +89,8 @@ export const POEM_SOUNDTRACK_MANIFEST: readonly SoundtrackRecord[] = [
     mimeType: "audio/mpeg",
     audioFormat: "mp3",
     assetKey: "arc-snd-poem-004",
-    rightsApproval: "unverified",
-    hostingApproved: false,
+    rightsApproval: "licensed",
+    hostingApproved: true,
     gainMultiplier: 1,
   },
   {
@@ -104,8 +103,8 @@ export const POEM_SOUNDTRACK_MANIFEST: readonly SoundtrackRecord[] = [
     mimeType: "audio/mpeg",
     audioFormat: "mp3",
     assetKey: "arc-snd-poem-005",
-    rightsApproval: "unverified",
-    hostingApproved: false,
+    rightsApproval: "licensed",
+    hostingApproved: true,
     gainMultiplier: 1,
   },
   {
@@ -118,8 +117,8 @@ export const POEM_SOUNDTRACK_MANIFEST: readonly SoundtrackRecord[] = [
     mimeType: "audio/mpeg",
     audioFormat: "mp3",
     assetKey: "arc-snd-poem-006",
-    rightsApproval: "unverified",
-    hostingApproved: false,
+    rightsApproval: "licensed",
+    hostingApproved: true,
     gainMultiplier: 1,
   },
   {
@@ -132,8 +131,8 @@ export const POEM_SOUNDTRACK_MANIFEST: readonly SoundtrackRecord[] = [
     mimeType: "audio/mpeg",
     audioFormat: "mp3",
     assetKey: "arc-snd-poem-007",
-    rightsApproval: "unverified",
-    hostingApproved: false,
+    rightsApproval: "licensed",
+    hostingApproved: true,
     gainMultiplier: 1,
   },
   {
@@ -146,8 +145,8 @@ export const POEM_SOUNDTRACK_MANIFEST: readonly SoundtrackRecord[] = [
     mimeType: "audio/mpeg",
     audioFormat: "mp3",
     assetKey: "arc-snd-poem-008",
-    rightsApproval: "unverified",
-    hostingApproved: false,
+    rightsApproval: "licensed",
+    hostingApproved: true,
     gainMultiplier: 1,
   },
   {
@@ -160,8 +159,8 @@ export const POEM_SOUNDTRACK_MANIFEST: readonly SoundtrackRecord[] = [
     mimeType: "audio/mpeg",
     audioFormat: "mp3",
     assetKey: "arc-snd-poem-009",
-    rightsApproval: "unverified",
-    hostingApproved: false,
+    rightsApproval: "licensed",
+    hostingApproved: true,
     gainMultiplier: 1,
   },
   {
@@ -174,8 +173,8 @@ export const POEM_SOUNDTRACK_MANIFEST: readonly SoundtrackRecord[] = [
     mimeType: "audio/mpeg",
     audioFormat: "mp3",
     assetKey: "arc-snd-poem-010",
-    rightsApproval: "unverified",
-    hostingApproved: false,
+    rightsApproval: "licensed",
+    hostingApproved: true,
     gainMultiplier: 1,
   },
   {
@@ -188,8 +187,8 @@ export const POEM_SOUNDTRACK_MANIFEST: readonly SoundtrackRecord[] = [
     mimeType: "audio/mpeg",
     audioFormat: "mp3",
     assetKey: "arc-snd-poem-011",
-    rightsApproval: "unverified",
-    hostingApproved: false,
+    rightsApproval: "licensed",
+    hostingApproved: true,
     gainMultiplier: 1,
   },
   {
@@ -202,8 +201,8 @@ export const POEM_SOUNDTRACK_MANIFEST: readonly SoundtrackRecord[] = [
     mimeType: "audio/mpeg",
     audioFormat: "mp3",
     assetKey: "arc-snd-poem-012",
-    rightsApproval: "unverified",
-    hostingApproved: false,
+    rightsApproval: "licensed",
+    hostingApproved: true,
     gainMultiplier: 1,
   },
   {
@@ -216,8 +215,8 @@ export const POEM_SOUNDTRACK_MANIFEST: readonly SoundtrackRecord[] = [
     mimeType: "audio/mpeg",
     audioFormat: "mp3",
     assetKey: "arc-snd-poem-013",
-    rightsApproval: "unverified",
-    hostingApproved: false,
+    rightsApproval: "licensed",
+    hostingApproved: true,
     gainMultiplier: 1,
   },
   {
@@ -230,8 +229,8 @@ export const POEM_SOUNDTRACK_MANIFEST: readonly SoundtrackRecord[] = [
     mimeType: "audio/mpeg",
     audioFormat: "mp3",
     assetKey: "arc-snd-poem-014",
-    rightsApproval: "unverified",
-    hostingApproved: false,
+    rightsApproval: "licensed",
+    hostingApproved: true,
     gainMultiplier: 1,
   },
   {
@@ -244,8 +243,8 @@ export const POEM_SOUNDTRACK_MANIFEST: readonly SoundtrackRecord[] = [
     mimeType: "audio/mpeg",
     audioFormat: "mp3",
     assetKey: "arc-snd-poem-015",
-    rightsApproval: "unverified",
-    hostingApproved: false,
+    rightsApproval: "licensed",
+    hostingApproved: true,
     gainMultiplier: 1,
   },
   {
@@ -258,8 +257,8 @@ export const POEM_SOUNDTRACK_MANIFEST: readonly SoundtrackRecord[] = [
     mimeType: "audio/mpeg",
     audioFormat: "mp3",
     assetKey: "arc-snd-poem-016",
-    rightsApproval: "unverified",
-    hostingApproved: false,
+    rightsApproval: "licensed",
+    hostingApproved: true,
     gainMultiplier: 1,
   },
   {
@@ -272,8 +271,8 @@ export const POEM_SOUNDTRACK_MANIFEST: readonly SoundtrackRecord[] = [
     mimeType: "audio/mpeg",
     audioFormat: "mp3",
     assetKey: "arc-snd-poem-017",
-    rightsApproval: "unverified",
-    hostingApproved: false,
+    rightsApproval: "licensed",
+    hostingApproved: true,
     gainMultiplier: 1,
   },
   {
@@ -286,8 +285,8 @@ export const POEM_SOUNDTRACK_MANIFEST: readonly SoundtrackRecord[] = [
     mimeType: "audio/mpeg",
     audioFormat: "mp3",
     assetKey: "arc-snd-poem-018",
-    rightsApproval: "unverified",
-    hostingApproved: false,
+    rightsApproval: "licensed",
+    hostingApproved: true,
     gainMultiplier: 1,
   },
   {
@@ -300,8 +299,8 @@ export const POEM_SOUNDTRACK_MANIFEST: readonly SoundtrackRecord[] = [
     mimeType: "audio/mpeg",
     audioFormat: "mp3",
     assetKey: "arc-snd-poem-019",
-    rightsApproval: "unverified",
-    hostingApproved: false,
+    rightsApproval: "licensed",
+    hostingApproved: true,
     gainMultiplier: 1,
   },
   {
@@ -314,8 +313,8 @@ export const POEM_SOUNDTRACK_MANIFEST: readonly SoundtrackRecord[] = [
     mimeType: "audio/mpeg",
     audioFormat: "mp3",
     assetKey: "arc-snd-poem-020",
-    rightsApproval: "unverified",
-    hostingApproved: false,
+    rightsApproval: "licensed",
+    hostingApproved: true,
     gainMultiplier: 1,
   },
   {
@@ -328,8 +327,8 @@ export const POEM_SOUNDTRACK_MANIFEST: readonly SoundtrackRecord[] = [
     mimeType: "audio/mpeg",
     audioFormat: "mp3",
     assetKey: "arc-snd-poem-021",
-    rightsApproval: "unverified",
-    hostingApproved: false,
+    rightsApproval: "licensed",
+    hostingApproved: true,
     gainMultiplier: 1,
   },
   {
@@ -342,8 +341,8 @@ export const POEM_SOUNDTRACK_MANIFEST: readonly SoundtrackRecord[] = [
     mimeType: "audio/mp4",
     audioFormat: "m4a",
     assetKey: "arc-snd-poem-022",
-    rightsApproval: "unverified",
-    hostingApproved: false,
+    rightsApproval: "licensed",
+    hostingApproved: true,
     gainMultiplier: 1,
   },
   {
@@ -356,8 +355,8 @@ export const POEM_SOUNDTRACK_MANIFEST: readonly SoundtrackRecord[] = [
     mimeType: "audio/mpeg",
     audioFormat: "mp3",
     assetKey: "arc-snd-poem-023",
-    rightsApproval: "unverified",
-    hostingApproved: false,
+    rightsApproval: "licensed",
+    hostingApproved: true,
     gainMultiplier: 1,
   },
 ];

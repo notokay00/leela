@@ -42,14 +42,51 @@ const ALLOWED_MIME_TYPES = new Set<string>([
   "text/vtt",
 ]);
 
+function createApprovedStillnessPhotoRecord(index: number): MediaAssetRecord {
+  const padded = String(index).padStart(2, "0");
+  return {
+    id: `arc-i-${padded}`,
+    storageRelativePath: `stillness/stillness-${padded}.webp`,
+    mimeType: "image/webp",
+    downloadFilename: `arc-i-${padded}.webp`,
+    sensitivity: "high",
+    publishStatus: "ready",
+    // Personal-media consent is strictly separate from musical hosting rights.
+    consentConfirmed: true,
+    assetCategory: "personal-media",
+  };
+}
+
+function createApprovedSoundtrackRecord(
+  id: string,
+  filename: string,
+  mimeType: "audio/mpeg" | "audio/mp4"
+): MediaAssetRecord {
+  return {
+    id,
+    storageRelativePath: `soundtracks/${filename}`,
+    mimeType,
+    downloadFilename: filename,
+    sensitivity: "high",
+    publishStatus: "ready",
+    // Musical hosting rights are strictly separate from personal-media consent.
+    consentConfirmed: false,
+    assetCategory: "music-soundtrack",
+    hostingRightsConfirmed: true,
+  };
+}
+
 /**
  * Authoritative server-only registry mapping opaque asset identifiers to
  * physical storage locations.
  *
- * ALL personal archive material defaults strictly to:
- *   publishStatus: "withheld"
- *   consentConfirmed: false
- * and is therefore excluded from the active allowlist.
+ * - Unapproved personal archive material (e.g., Voices & Film) defaults strictly
+ *   to `publishStatus: "withheld"` and `consentConfirmed: false`.
+ * - Explicitly curated Stillness photographs use `assetCategory: "personal-media"`
+ *   with `consentConfirmed: true` and `sensitivity: "high"` (private, no-store),
+ *   without conflating personal consent with musical hosting rights.
+ * - Approved music soundtracks use `assetCategory: "music-soundtrack"` and
+ *   `hostingRightsConfirmed: true` while keeping personal `consentConfirmed: false`.
  */
 const ARCHIVE_MEDIA_REGISTRY: readonly MediaAssetRecord[] = [
   {
@@ -60,7 +97,131 @@ const ARCHIVE_MEDIA_REGISTRY: readonly MediaAssetRecord[] = [
     sensitivity: "high",
     publishStatus: "withheld",
     consentConfirmed: false,
+    assetCategory: "personal-media",
   },
+  ...Array.from({ length: 15 }, (_, idx) =>
+    createApprovedStillnessPhotoRecord(idx + 1)
+  ),
+  createApprovedSoundtrackRecord(
+    "arc-score-aranjuez",
+    "arc-score-aranjuez.mp3",
+    "audio/mpeg"
+  ),
+  createApprovedSoundtrackRecord(
+    "arc-snd-poem-001",
+    "arc-snd-poem-001.mp3",
+    "audio/mpeg"
+  ),
+  createApprovedSoundtrackRecord(
+    "arc-snd-poem-002",
+    "arc-snd-poem-002.mp3",
+    "audio/mpeg"
+  ),
+  createApprovedSoundtrackRecord(
+    "arc-snd-poem-003",
+    "arc-snd-poem-003.mp3",
+    "audio/mpeg"
+  ),
+  createApprovedSoundtrackRecord(
+    "arc-snd-poem-004",
+    "arc-snd-poem-004.mp3",
+    "audio/mpeg"
+  ),
+  createApprovedSoundtrackRecord(
+    "arc-snd-poem-005",
+    "arc-snd-poem-005.mp3",
+    "audio/mpeg"
+  ),
+  createApprovedSoundtrackRecord(
+    "arc-snd-poem-006",
+    "arc-snd-poem-006.mp3",
+    "audio/mpeg"
+  ),
+  createApprovedSoundtrackRecord(
+    "arc-snd-poem-007",
+    "arc-snd-poem-007.mp3",
+    "audio/mpeg"
+  ),
+  createApprovedSoundtrackRecord(
+    "arc-snd-poem-008",
+    "arc-snd-poem-008.mp3",
+    "audio/mpeg"
+  ),
+  createApprovedSoundtrackRecord(
+    "arc-snd-poem-009",
+    "arc-snd-poem-009.mp3",
+    "audio/mpeg"
+  ),
+  createApprovedSoundtrackRecord(
+    "arc-snd-poem-010",
+    "arc-snd-poem-010.mp3",
+    "audio/mpeg"
+  ),
+  createApprovedSoundtrackRecord(
+    "arc-snd-poem-011",
+    "arc-snd-poem-011.mp3",
+    "audio/mpeg"
+  ),
+  createApprovedSoundtrackRecord(
+    "arc-snd-poem-012",
+    "arc-snd-poem-012.mp3",
+    "audio/mpeg"
+  ),
+  createApprovedSoundtrackRecord(
+    "arc-snd-poem-013",
+    "arc-snd-poem-013.mp3",
+    "audio/mpeg"
+  ),
+  createApprovedSoundtrackRecord(
+    "arc-snd-poem-014",
+    "arc-snd-poem-014.mp3",
+    "audio/mpeg"
+  ),
+  createApprovedSoundtrackRecord(
+    "arc-snd-poem-015",
+    "arc-snd-poem-015.mp3",
+    "audio/mpeg"
+  ),
+  createApprovedSoundtrackRecord(
+    "arc-snd-poem-016",
+    "arc-snd-poem-016.mp3",
+    "audio/mpeg"
+  ),
+  createApprovedSoundtrackRecord(
+    "arc-snd-poem-017",
+    "arc-snd-poem-017.mp3",
+    "audio/mpeg"
+  ),
+  createApprovedSoundtrackRecord(
+    "arc-snd-poem-018",
+    "arc-snd-poem-018.mp3",
+    "audio/mpeg"
+  ),
+  createApprovedSoundtrackRecord(
+    "arc-snd-poem-019",
+    "arc-snd-poem-019.mp3",
+    "audio/mpeg"
+  ),
+  createApprovedSoundtrackRecord(
+    "arc-snd-poem-020",
+    "arc-snd-poem-020.mp3",
+    "audio/mpeg"
+  ),
+  createApprovedSoundtrackRecord(
+    "arc-snd-poem-021",
+    "arc-snd-poem-021.mp3",
+    "audio/mpeg"
+  ),
+  createApprovedSoundtrackRecord(
+    "arc-snd-poem-022",
+    "arc-snd-poem-022.m4a",
+    "audio/mp4"
+  ),
+  createApprovedSoundtrackRecord(
+    "arc-snd-poem-023",
+    "arc-snd-poem-023.mp3",
+    "audio/mpeg"
+  ),
 ];
 
 export function isValidOpaqueAssetId(raw: string): boolean {
